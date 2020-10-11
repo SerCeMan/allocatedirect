@@ -1,0 +1,24 @@
+plugins {
+    id 'java'
+    id 'com.github.johnrengelman.shadow' version '6.0.0'
+}
+
+
+group 'org.example'
+version '1.0-SNAPSHOT'
+
+repositories {
+    jcenter()
+}
+
+dependencies {
+    dependencies {
+        compile 'io.rsocket:rsocket-core:1.0.2'
+        compile 'io.rsocket:rsocket-transport-netty:1.0.2'
+        compile 'org.slf4j:slf4j-simple:1.7.30'
+        compile 'com.google.code.gson:gson:2.8.6'
+
+
+        testCompile('junit:junit:4.13')
+    }
+}
