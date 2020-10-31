@@ -1,4 +1,4 @@
-package me.serce.puzzle;
+package me.serce.allocatedirect;
 
 import io.rsocket.Payload;
 import io.rsocket.RSocket;
@@ -33,8 +33,7 @@ public class Main {
       }
     });
     int port = 13131;
-    var server = RSocketServer //
-        .create(acceptor)//
+    var server = RSocketServer.create(acceptor) //
         .bind(TcpServerTransport.create(port))
         .block();
     var client = RSocketConnector.create() //

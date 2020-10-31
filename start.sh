@@ -4,7 +4,7 @@ set -euo pipefail
 REPO_DIR=$(git rev-parse --show-toplevel)
 PROG=$(basename "$0")
 
-log_info() {
+info() {
   echo "$(date '+[%Y-%m-%d %H:%M:%S]') ${PROG}: INFO: $@"
 }
 
@@ -19,7 +19,28 @@ usejdk() {
         version=1.8
     fi
     local jdk
-    jdk=$(/usr/libexec/java_home -v $version)
+    case $(uname) in
+      Darwin)
+        jdk=$(/usr/libexec/java_home -v $version)
+        ;;
+      Linux)
+        jdk=/usr/lib/jvm/zulu-13-amd64/
+        if [[ ! -d "${jdk}" ]]; then
+          cat <<'EOF'
+# JDK 13 is not installed, you can install one from Azul by typing:
+sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0xB1998361219BD9C9
+sudo tee -a "/etc/apt/sources.list.d/azulsystems-stable.list" >/dev/null <<TEE
+deb http://repos.azulsystems.com/ubuntu stable main
+TEE
+sudo apt-get update
+sudo apt-get -y install zulu-13
+EOF
+        fi
+        ;;
+      *)
+        error "unknown OS: $(uname)"
+        ;;
+    esac
     export JAVA_HOME="${jdk}"
     export PATH="${JAVA_HOME}/bin/:$PATH"
 }
@@ -30,7 +51,7 @@ main() {
   usejdk 13
 
   local gc_opts
-  local gc
+  local gc=g1
   for arg; do
     case "${arg}" in
       g1)
@@ -48,12 +69,12 @@ main() {
   done
 
   if [[ -z "${gc_opts:-}" ]]; then
-    error "please specify gc"
+    info "starting with default gc"
   fi
 
   mkdir -p /tmp/${gc}
-  rm -r /tmp/${gc}/*
-  java -cp build/libs/gcbufferpuzzle-1.0-SNAPSHOT-all.jar \
+  rm -rf /tmp/${gc}/*
+  java -cp build/libs/allocatedirect-1.0-SNAPSHOT-all.jar \
     -Xmx6G \
     -Xms6G \
     -XX:+AlwaysPreTouch \
@@ -65,7 +86,7 @@ main() {
     -Dcom.sun.management.jmxremote.port=1100 \
     -Dcom.sun.management.jmxremote.authenticate=false \
     -Dcom.sun.management.jmxremote.ssl=false \
-    me.serce.puzzle.Main
+    me.serce.allocatedirect.Main
   popd > /dev/null
 }
 
