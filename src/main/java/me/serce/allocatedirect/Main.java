@@ -1,23 +1,24 @@
 package me.serce.allocatedirect;
 
-import io.rsocket.Payload;
 import io.rsocket.RSocket;
-import io.rsocket.SocketAcceptor;
 import io.rsocket.core.RSocketConnector;
 import io.rsocket.core.RSocketServer;
+import io.rsocket.frame.decoder.PayloadDecoder;
 import io.rsocket.transport.netty.client.TcpClientTransport;
 import io.rsocket.transport.netty.server.TcpServerTransport;
 import io.rsocket.util.ByteBufPayload;
-import org.reactivestreams.Publisher;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import reactor.core.publisher.DirectProcessor;
 import reactor.core.publisher.Flux;
 
+import java.util.Arrays;
 import java.util.Objects;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
+
+import static io.rsocket.SocketAcceptor.forRequestChannel;
 
 public class Main {
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -25,18 +26,20 @@ public class Main {
   public static void main(String[] args) throws Exception {
     logger.info("starting backend");
 
-    var acceptor = SocketAcceptor.with(new RSocket() {
-      @Override
-      public Flux<Payload> requestChannel(Publisher<Payload> payloads) {
-        return Flux.from(payloads)
-            .map(p -> ByteBufPayload.create("ack: " + p.getDataUtf8()));
-      }
-    });
-    int port = 13131;
-    var server = RSocketServer.create(acceptor) //
+    var decoder = Arrays.asList(args).contains("heap") //
+        ? HeapBufferPayloadDecoder.INSTANCE // heap buffer decoder
+        : PayloadDecoder.DEFAULT; // default direct buffer decoder
+    var port = 13131;
+    var server = RSocketServer.create(forRequestChannel( //
+        payloads -> { //
+          return Flux.from(payloads)
+              .map(p -> ByteBufPayload.create("ack: " + p.getDataUtf8()));
+        })) //
+        .payloadDecoder(decoder)
         .bind(TcpServerTransport.create(port))
         .block();
     var client = RSocketConnector.create() //
+        .payloadDecoder(decoder)
         .connect(TcpClientTransport.create(port))
         .block();
     Runtime.getRuntime().addShutdownHook(new Thread(() -> {
