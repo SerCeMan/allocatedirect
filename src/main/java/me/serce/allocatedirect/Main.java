@@ -24,11 +24,11 @@ public class Main {
   private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
   public static void main(String[] args) throws Exception {
-    logger.info("starting backend");
-
     var decoder = Arrays.asList(args).contains("heap") //
         ? HeapBufferPayloadDecoder.INSTANCE // heap buffer decoder
         : PayloadDecoder.DEFAULT; // default direct buffer decoder
+
+    logger.info("starting backend using {} decoder", decoder.getClass().getSimpleName());
     var port = 13131;
     var server = RSocketServer.create(forRequestChannel( //
         payloads -> { //

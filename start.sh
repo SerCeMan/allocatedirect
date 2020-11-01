@@ -26,14 +26,14 @@ usejdk() {
       Linux)
         jdk=/usr/lib/jvm/zulu-13-amd64/
         if [[ ! -d "${jdk}" ]]; then
-          cat <<'EOF'
-# JDK 13 is not installed, you can install one from Azul by typing:
+          cat <<EOF
+# JDK ${version} is not installed, you can install one from Azul by typing:
 sudo apt-key adv --keyserver hkp://keyserver.ubuntu.com:80 --recv-keys 0xB1998361219BD9C9
 sudo tee -a "/etc/apt/sources.list.d/azulsystems-stable.list" >/dev/null <<TEE
 deb http://repos.azulsystems.com/ubuntu stable main
 TEE
 sudo apt-get update
-sudo apt-get -y install zulu-13
+sudo apt-get -y install zulu-${version}
 EOF
         fi
         ;;
@@ -47,11 +47,12 @@ EOF
 
 main() {
   pushd "${REPO_DIR}" >/dev/null
-  ./gradlew build shadowJar
+  ./gradlew build shadowJar --no-daemon
   usejdk 13
 
   local gc_opts
   local gc=g1
+  local args=()
   for arg; do
     case "${arg}" in
       g1)
@@ -63,7 +64,7 @@ main() {
         gc_opts=( -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC )
         ;;
       *)
-        error "unknown option: ${arg}"
+        args+=( "${arg}" )
         ;;
     esac
   done
@@ -86,7 +87,7 @@ main() {
     -Dcom.sun.management.jmxremote.port=1100 \
     -Dcom.sun.management.jmxremote.authenticate=false \
     -Dcom.sun.management.jmxremote.ssl=false \
-    me.serce.allocatedirect.Main
+    me.serce.allocatedirect.Main "${args[@]}"
   popd > /dev/null
 }
 
