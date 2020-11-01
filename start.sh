@@ -60,7 +60,7 @@ main() {
         ;;
       shen)
         gc=shenandoah
-        gc_opts=( -XX:+UnlockExperimentalVMOptions -XX:+UseZGC )
+        gc_opts=( -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC )
         ;;
       *)
         error "unknown option: ${arg}"
@@ -68,21 +68,21 @@ main() {
     esac
   done
 
-  if [[ -z "${gc_opts:-}" ]]; then
-    info "starting with default gc"
-  fi
+  info "starting with ${gc} gc"
 
   mkdir -p /tmp/${gc}
   rm -rf /tmp/${gc}/*
   java -cp build/libs/allocatedirect-1.0-SNAPSHOT-all.jar \
-    -Xmx6G \
-    -Xms6G \
+    -Xmx4G \
+    -Xms4G \
     -XX:+AlwaysPreTouch \
     ${gc_opts[@]} \
     -Xlog:safepoint,gc*:file=/tmp/${gc}/gc.log:time,level,tags:filecount=6,filesize=4000k \
     -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5001 \
     -Dcom.sun.management.jmxremote \
     -Dcom.sun.management.jmxremote.local.only=true \
+    -Dcom.sun.management.jmxremote.rmi.port=1100 \
+    -Djava.rmi.server.hostname=127.0.0.1 \
     -Dcom.sun.management.jmxremote.port=1100 \
     -Dcom.sun.management.jmxremote.authenticate=false \
     -Dcom.sun.management.jmxremote.ssl=false \
