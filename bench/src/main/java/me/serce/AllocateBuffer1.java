@@ -9,11 +9,10 @@ import java.util.concurrent.TimeUnit;
 @State(Scope.Thread)
 @BenchmarkMode(Mode.AverageTime)
 @OutputTimeUnit(TimeUnit.NANOSECONDS)
-@Warmup(iterations = 1, time = 2500, timeUnit = TimeUnit.MICROSECONDS)
-@Measurement(iterations = 2, time = 5000, timeUnit = TimeUnit.MILLISECONDS)
+@Warmup(iterations = 5, timeUnit = TimeUnit.MICROSECONDS)
+@Measurement(iterations = 5, timeUnit = TimeUnit.MILLISECONDS)
 public class AllocateBuffer1 {
-  @Param({"128", "1024", "16384"})
-  int size;
+  @Param({"128", "1024", "16384"}) int size;
 
   @Benchmark
   public ByteBuffer heap() {

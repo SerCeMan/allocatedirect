@@ -10,10 +10,15 @@ main() {
   usejdk 13
 
   local clz
+  local args=()
   for arg; do
     case "${arg}" in
       alloc1)
         clz=me.serce.AllocateBuffer1
+        ;;
+      alloc2)
+        clz=me.serce.AllocateBuffer2
+        args+=( -prof perfasm )
         ;;
       *)
         error "unknown benchmark ${arg}"
@@ -22,7 +27,7 @@ main() {
   done
 
   info "starting ${clz}"
-  java -jar target/benchmarks.jar "${clz}"
+  java -jar target/benchmarks.jar "${clz}" "${args[@]}"
   popd > /dev/null
 }
 
