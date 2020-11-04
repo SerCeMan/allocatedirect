@@ -1,0 +1,1869 @@
+<?xml version="1.0" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN" "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg version="1.1" width="1200" height="550" onload="init(evt)" viewBox="0 0 1200 550" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+<style type="text/css">
+	text { font-family:Verdana; font-size:12px; fill:rgb(0,0,0); }
+	#search { opacity:0.1; cursor:pointer; }
+	#search:hover, #search.show { opacity:1; }
+	#subtitle { text-anchor:middle; font-color:rgb(160,160,160); }
+	#title { text-anchor:middle; font-size:17px}
+	#unzoom { cursor:pointer; }
+	#frames > *:hover { stroke:black; stroke-width:0.5; cursor:pointer; }
+	.hide { display:none; }
+	.parent { opacity:0.5; }
+</style>
+<script type="text/ecmascript">
+<![CDATA[
+	"use strict";
+	var details, searchbtn, unzoombtn, matchedtxt, svg, searching;
+	function init(evt) {
+		details = document.getElementById("details").firstChild;
+		searchbtn = document.getElementById("search");
+		unzoombtn = document.getElementById("unzoom");
+		matchedtxt = document.getElementById("matched");
+		svg = document.getElementsByTagName("svg")[0];
+		searching = 0;
+	}
+
+	window.addEventListener("click", function(e) {
+		var target = find_group(e.target);
+		if (target) {
+			if (target.nodeName == "a") {
+				if (e.ctrlKey === false) return;
+				e.preventDefault();
+			}
+			if (target.classList.contains("parent")) unzoom();
+			zoom(target);
+		}
+		else if (e.target.id == "unzoom") unzoom();
+		else if (e.target.id == "search") search_prompt();
+	}, false)
+
+	// mouse-over for info
+	// show
+	window.addEventListener("mouseover", function(e) {
+		var target = find_group(e.target);
+		if (target) details.nodeValue = "Function: " + g_to_text(target);
+	}, false)
+
+	// clear
+	window.addEventListener("mouseout", function(e) {
+		var target = find_group(e.target);
+		if (target) details.nodeValue = ' ';
+	}, false)
+
+	// ctrl-F for search
+	window.addEventListener("keydown",function (e) {
+		if (e.keyCode === 114 || (e.ctrlKey && e.keyCode === 70)) {
+			e.preventDefault();
+			search_prompt();
+		}
+	}, false)
+
+	// functions
+	function find_child(node, selector) {
+		var children = node.querySelectorAll(selector);
+		if (children.length) return children[0];
+		return;
+	}
+	function find_group(node) {
+		var parent = node.parentElement;
+		if (!parent) return;
+		if (parent.id == "frames") return node;
+		return find_group(parent);
+	}
+	function orig_save(e, attr, val) {
+		if (e.attributes["_orig_" + attr] != undefined) return;
+		if (e.attributes[attr] == undefined) return;
+		if (val == undefined) val = e.attributes[attr].value;
+		e.setAttribute("_orig_" + attr, val);
+	}
+	function orig_load(e, attr) {
+		if (e.attributes["_orig_"+attr] == undefined) return;
+		e.attributes[attr].value = e.attributes["_orig_" + attr].value;
+		e.removeAttribute("_orig_"+attr);
+	}
+	function g_to_text(e) {
+		var text = find_child(e, "title").firstChild.nodeValue;
+		return (text)
+	}
+	function g_to_func(e) {
+		var func = g_to_text(e);
+		// if there's any manipulation we want to do to the function
+		// name before it's searched, do it here before returning.
+		return (func);
+	}
+	function update_text(e) {
+		var r = find_child(e, "rect");
+		var t = find_child(e, "text");
+		var w = parseFloat(r.attributes.width.value) -3;
+		var txt = find_child(e, "title").textContent.replace(/\([^(]*\)$/,"");
+		t.attributes.x.value = parseFloat(r.attributes.x.value) + 3;
+
+		// Smaller than this size won't fit anything
+		if (w < 2 * 12 * 0.59) {
+			t.textContent = "";
+			return;
+		}
+
+		t.textContent = txt;
+		// Fit in full text width
+		if (/^ *$/.test(txt) || t.getSubStringLength(0, txt.length) < w)
+			return;
+
+		for (var x = txt.length - 2; x > 0; x--) {
+			if (t.getSubStringLength(0, x + 2) <= w) {
+				t.textContent = txt.substring(0, x) + "..";
+				return;
+			}
+		}
+		t.textContent = "";
+	}
+
+	// zoom
+	function zoom_reset(e) {
+		if (e.attributes != undefined) {
+			orig_load(e, "x");
+			orig_load(e, "width");
+		}
+		if (e.childNodes == undefined) return;
+		for (var i = 0, c = e.childNodes; i < c.length; i++) {
+			zoom_reset(c[i]);
+		}
+	}
+	function zoom_child(e, x, ratio) {
+		if (e.attributes != undefined) {
+			if (e.attributes.x != undefined) {
+				orig_save(e, "x");
+				e.attributes.x.value = (parseFloat(e.attributes.x.value) - x - 10) * ratio + 10;
+				if (e.tagName == "text")
+					e.attributes.x.value = find_child(e.parentNode, "rect[x]").attributes.x.value + 3;
+			}
+			if (e.attributes.width != undefined) {
+				orig_save(e, "width");
+				e.attributes.width.value = parseFloat(e.attributes.width.value) * ratio;
+			}
+		}
+
+		if (e.childNodes == undefined) return;
+		for (var i = 0, c = e.childNodes; i < c.length; i++) {
+			zoom_child(c[i], x - 10, ratio);
+		}
+	}
+	function zoom_parent(e) {
+		if (e.attributes) {
+			if (e.attributes.x != undefined) {
+				orig_save(e, "x");
+				e.attributes.x.value = 10;
+			}
+			if (e.attributes.width != undefined) {
+				orig_save(e, "width");
+				e.attributes.width.value = parseInt(svg.width.baseVal.value) - (10 * 2);
+			}
+		}
+		if (e.childNodes == undefined) return;
+		for (var i = 0, c = e.childNodes; i < c.length; i++) {
+			zoom_parent(c[i]);
+		}
+	}
+	function zoom(node) {
+		var attr = find_child(node, "rect").attributes;
+		var width = parseFloat(attr.width.value);
+		var xmin = parseFloat(attr.x.value);
+		var xmax = parseFloat(xmin + width);
+		var ymin = parseFloat(attr.y.value);
+		var ratio = (svg.width.baseVal.value - 2 * 10) / width;
+
+		// XXX: Workaround for JavaScript float issues (fix me)
+		var fudge = 0.0001;
+
+		unzoombtn.classList.remove("hide");
+
+		var el = document.getElementById("frames").children;
+		for (var i = 0; i < el.length; i++) {
+			var e = el[i];
+			var a = find_child(e, "rect").attributes;
+			var ex = parseFloat(a.x.value);
+			var ew = parseFloat(a.width.value);
+			var upstack;
+			// Is it an ancestor
+			if (0 == 0) {
+				upstack = parseFloat(a.y.value) > ymin;
+			} else {
+				upstack = parseFloat(a.y.value) < ymin;
+			}
+			if (upstack) {
+				// Direct ancestor
+				if (ex <= xmin && (ex+ew+fudge) >= xmax) {
+					e.classList.add("parent");
+					zoom_parent(e);
+					update_text(e);
+				}
+				// not in current path
+				else
+					e.classList.add("hide");
+			}
+			// Children maybe
+			else {
+				// no common path
+				if (ex < xmin || ex + fudge >= xmax) {
+					e.classList.add("hide");
+				}
+				else {
+					zoom_child(e, xmin, ratio);
+					update_text(e);
+				}
+			}
+		}
+	}
+	function unzoom() {
+		unzoombtn.classList.add("hide");
+		var el = document.getElementById("frames").children;
+		for(var i = 0; i < el.length; i++) {
+			el[i].classList.remove("parent");
+			el[i].classList.remove("hide");
+			zoom_reset(el[i]);
+			update_text(el[i]);
+		}
+	}
+
+	// search
+	function reset_search() {
+		var el = document.querySelectorAll("#frames rect");
+		for (var i = 0; i < el.length; i++) {
+			orig_load(el[i], "fill")
+		}
+	}
+	function search_prompt() {
+		if (!searching) {
+			var term = prompt("Enter a search term (regexp " +
+			    "allowed, eg: ^ext4_)", "");
+			if (term != null) {
+				search(term)
+			}
+		} else {
+			reset_search();
+			searching = 0;
+			searchbtn.classList.remove("show");
+			searchbtn.firstChild.nodeValue = "Search"
+			matchedtxt.classList.add("hide");
+			matchedtxt.firstChild.nodeValue = ""
+		}
+	}
+	function search(term) {
+		var re = new RegExp(term);
+		var el = document.getElementById("frames").children;
+		var matches = new Object();
+		var maxwidth = 0;
+		for (var i = 0; i < el.length; i++) {
+			var e = el[i];
+			var func = g_to_func(e);
+			var rect = find_child(e, "rect");
+			if (func == null || rect == null)
+				continue;
+
+			// Save max width. Only works as we have a root frame
+			var w = parseFloat(rect.attributes.width.value);
+			if (w > maxwidth)
+				maxwidth = w;
+
+			if (func.match(re)) {
+				// highlight
+				var x = parseFloat(rect.attributes.x.value);
+				orig_save(rect, "fill");
+				rect.attributes.fill.value = "rgb(230,0,230)";
+
+				// remember matches
+				if (matches[x] == undefined) {
+					matches[x] = w;
+				} else {
+					if (w > matches[x]) {
+						// overwrite with parent
+						matches[x] = w;
+					}
+				}
+				searching = 1;
+			}
+		}
+		if (!searching)
+			return;
+
+		searchbtn.classList.add("show");
+		searchbtn.firstChild.nodeValue = "Reset Search";
+
+		// calculate percent matched, excluding vertical overlap
+		var count = 0;
+		var lastx = -1;
+		var lastw = 0;
+		var keys = Array();
+		for (k in matches) {
+			if (matches.hasOwnProperty(k))
+				keys.push(k);
+		}
+		// sort the matched frames by their x location
+		// ascending, then width descending
+		keys.sort(function(a, b){
+			return a - b;
+		});
+		// Step through frames saving only the biggest bottom-up frames
+		// thanks to the sort order. This relies on the tree property
+		// where children are always smaller than their parents.
+		var fudge = 0.0001;	// JavaScript floating point
+		for (var k in keys) {
+			var x = parseFloat(keys[k]);
+			var w = matches[keys[k]];
+			if (x >= lastx + lastw - fudge) {
+				count += w;
+				lastx = x;
+				lastw = w;
+			}
+		}
+		// display matched percent
+		matchedtxt.classList.remove("hide");
+		var pct = 100 * count / maxwidth;
+		if (pct != 100) pct = pct.toFixed(1)
+		matchedtxt.firstChild.nodeValue = "Matched: " + pct + "%";
+	}
+]]>
+</script>
+<rect x="0" y="0" width="100%" height="100%" fill="rgb(240,240,220)"/>
+<text id="title" x="600" y="24">Flame Graph</text>
+<text id="details" x="10" y="533"> </text>
+<text id="unzoom" x="10" y="24" class="hide">Reset Zoom</text>
+<text id="search" x="1090" y="24">Search</text>
+<text id="matched" x="1090" y="533"> </text>
+<g id="frames">
+<g>
+<title>all (5,735 samples, 100.00%)</title><rect x="10.0" y="499.0" width="1180.0" height="15" fill="#e66060" rx="2" ry="2"/>
+<text x="13.0" y="510.0">all</text>
+</g>
+<g>
+<title>/usr/lib/x86_64-linux-gnu/ld-2.31.so (4 samples, 0.07%)</title><rect x="10.0" y="483.0" width="0.8" height="15" fill="#ef6d6d" rx="2" ry="2"/>
+<text x="13.0" y="494.0"></text>
+</g>
+<g>
+<title>SharedRuntime::complete_monitor_locking_C(oopDesc*, BasicLock*, JavaThread*) (3 samples, 0.05%)</title><rect x="10.8" y="483.0" width="0.6" height="15" fill="#cece3e" rx="2" ry="2"/>
+<text x="13.8" y="494.0"></text>
+</g>
+<g>
+<title>ObjectMonitor::enter(Thread*) [clone .part.86] (3 samples, 0.05%)</title><rect x="10.8" y="467.0" width="0.6" height="15" fill="#e0e044" rx="2" ry="2"/>
+<text x="13.8" y="478.0"></text>
+</g>
+<g>
+<title>ObjectMonitor::EnterI(Thread*) (3 samples, 0.05%)</title><rect x="10.8" y="451.0" width="0.6" height="15" fill="#d0d03e" rx="2" ry="2"/>
+<text x="13.8" y="462.0"></text>
+</g>
+<g>
+<title>ObjectMonitor::TrySpin(Thread*) [clone .part.64] (3 samples, 0.05%)</title><rect x="10.8" y="435.0" width="0.6" height="15" fill="#d2d23f" rx="2" ry="2"/>
+<text x="13.8" y="446.0"></text>
+</g>
+<g>
+<title>[no_Java_frame] (2 samples, 0.03%)</title><rect x="11.4" y="483.0" width="0.5" height="15" fill="#fb7d7d" rx="2" ry="2"/>
+<text x="14.4" y="494.0"></text>
+</g>
+<g>
+<title>[unknown] (44 samples, 0.77%)</title><rect x="12.1" y="483.0" width="9.0" height="15" fill="#eb6767" rx="2" ry="2"/>
+<text x="15.1" y="494.0"></text>
+</g>
+<g>
+<title>/usr/lib/x86_64-linux-gnu/ld-2.31.so (42 samples, 0.73%)</title><rect x="12.1" y="467.0" width="8.6" height="15" fill="#f97a7a" rx="2" ry="2"/>
+<text x="15.1" y="478.0"></text>
+</g>
+<g>
+<title>[unknown_Java] (5 samples, 0.09%)</title><rect x="21.1" y="483.0" width="1.0" height="15" fill="#f47474" rx="2" ry="2"/>
+<text x="24.1" y="494.0"></text>
+</g>
+<g>
+<title>__pthread_cond_signal (4 samples, 0.07%)</title><rect x="21.3" y="467.0" width="0.8" height="15" fill="#e25b5b" rx="2" ry="2"/>
+<text x="24.3" y="478.0"></text>
+</g>
+<g>
+<title>entry_SYSCALL_64_after_hwframe (3 samples, 0.05%)</title><rect x="21.5" y="451.0" width="0.6" height="15" fill="#e88400" rx="2" ry="2"/>
+<text x="24.5" y="462.0"></text>
+</g>
+<g>
+<title>do_syscall_64 (3 samples, 0.05%)</title><rect x="21.5" y="435.0" width="0.6" height="15" fill="#f89400" rx="2" ry="2"/>
+<text x="24.5" y="446.0"></text>
+</g>
+<g>
+<title>__x64_sys_futex (3 samples, 0.05%)</title><rect x="21.5" y="419.0" width="0.6" height="15" fill="#f38f00" rx="2" ry="2"/>
+<text x="24.5" y="430.0"></text>
+</g>
+<g>
+<title>do_futex (3 samples, 0.05%)</title><rect x="21.5" y="403.0" width="0.6" height="15" fill="#fa9600" rx="2" ry="2"/>
+<text x="24.5" y="414.0"></text>
+</g>
+<g>
+<title>futex_wake (3 samples, 0.05%)</title><rect x="21.5" y="387.0" width="0.6" height="15" fill="#ea8600" rx="2" ry="2"/>
+<text x="24.5" y="398.0"></text>
+</g>
+<g>
+<title>wake_up_q (2 samples, 0.03%)</title><rect x="21.7" y="371.0" width="0.4" height="15" fill="#e78300" rx="2" ry="2"/>
+<text x="24.7" y="382.0"></text>
+</g>
+<g>
+<title>try_to_wake_up (2 samples, 0.03%)</title><rect x="21.7" y="355.0" width="0.4" height="15" fill="#e68200" rx="2" ry="2"/>
+<text x="24.7" y="366.0"></text>
+</g>
+<g>
+<title>__lock_text_start (2 samples, 0.03%)</title><rect x="21.7" y="339.0" width="0.4" height="15" fill="#f38f00" rx="2" ry="2"/>
+<text x="24.7" y="350.0"></text>
+</g>
+<g>
+<title>java/lang/Thread.run (1,388 samples, 24.20%)</title><rect x="22.3" y="483.0" width="285.6" height="15" fill="#53e453" rx="2" ry="2"/>
+<text x="25.3" y="494.0">java/lang/Thread.run</text>
+</g>
+<g>
+<title>java/util/concurrent/ThreadPoolExecutor$Worker.run (1,388 samples, 24.20%)</title><rect x="22.3" y="467.0" width="285.6" height="15" fill="#64f564" rx="2" ry="2"/>
+<text x="25.3" y="478.0">java/util/concurrent/ThreadPoolExecuto..</text>
+</g>
+<g>
+<title>java/util/concurrent/ThreadPoolExecutor.runWorker (1,388 samples, 24.20%)</title><rect x="22.3" y="451.0" width="285.6" height="15" fill="#67f867" rx="2" ry="2"/>
+<text x="25.3" y="462.0">java/util/concurrent/ThreadPoolExecuto..</text>
+</g>
+<g>
+<title>java/util/concurrent/FutureTask.run (1,388 samples, 24.20%)</title><rect x="22.3" y="435.0" width="285.6" height="15" fill="#65f665" rx="2" ry="2"/>
+<text x="25.3" y="446.0">java/util/concurrent/FutureTask.run</text>
+</g>
+<g>
+<title>java/util/concurrent/Executors$RunnableAdapter.call (1,388 samples, 24.20%)</title><rect x="22.3" y="419.0" width="285.6" height="15" fill="#56e756" rx="2" ry="2"/>
+<text x="25.3" y="430.0">java/util/concurrent/Executors$Runnabl..</text>
+</g>
+<g>
+<title>java/util/concurrent/FutureTask.run (1,388 samples, 24.20%)</title><rect x="22.3" y="403.0" width="285.6" height="15" fill="#5ced5c" rx="2" ry="2"/>
+<text x="25.3" y="414.0">java/util/concurrent/FutureTask.run</text>
+</g>
+<g>
+<title>org/openjdk/jmh/runner/BenchmarkHandler$BenchmarkTask.call (1,388 samples, 24.20%)</title><rect x="22.3" y="387.0" width="285.6" height="15" fill="#59ea59" rx="2" ry="2"/>
+<text x="25.3" y="398.0">org/openjdk/jmh/runner/BenchmarkHandle..</text>
+</g>
+<g>
+<title>org/openjdk/jmh/runner/BenchmarkHandler$BenchmarkTask.call (1,388 samples, 24.20%)</title><rect x="22.3" y="371.0" width="285.6" height="15" fill="#5dee5d" rx="2" ry="2"/>
+<text x="25.3" y="382.0">org/openjdk/jmh/runner/BenchmarkHandle..</text>
+</g>
+<g>
+<title>java/lang/reflect/Method.invoke (1,388 samples, 24.20%)</title><rect x="22.3" y="355.0" width="285.6" height="15" fill="#56e756" rx="2" ry="2"/>
+<text x="25.3" y="366.0">java/lang/reflect/Method.invoke</text>
+</g>
+<g>
+<title>jdk/internal/reflect/DelegatingMethodAccessorImpl.invoke (1,388 samples, 24.20%)</title><rect x="22.3" y="339.0" width="285.6" height="15" fill="#5bec5b" rx="2" ry="2"/>
+<text x="25.3" y="350.0">jdk/internal/reflect/DelegatingMethodA..</text>
+</g>
+<g>
+<title>jdk/internal/reflect/NativeMethodAccessorImpl.invoke (1,388 samples, 24.20%)</title><rect x="22.3" y="323.0" width="285.6" height="15" fill="#5ff05f" rx="2" ry="2"/>
+<text x="25.3" y="334.0">jdk/internal/reflect/NativeMethodAcces..</text>
+</g>
+<g>
+<title>jdk/internal/reflect/NativeMethodAccessorImpl.invoke0 (1,388 samples, 24.20%)</title><rect x="22.3" y="307.0" width="285.6" height="15" fill="#54e554" rx="2" ry="2"/>
+<text x="25.3" y="318.0">jdk/internal/reflect/NativeMethodAcces..</text>
+</g>
+<g>
+<title>me/serce/jmh_generated/AllocateBuffer2_combined_jmhTest.combined_AverageTime (1,388 samples, 24.20%)</title><rect x="22.3" y="291.0" width="285.6" height="15" fill="#60f160" rx="2" ry="2"/>
+<text x="25.3" y="302.0">me/serce/jmh_generated/AllocateBuffer2..</text>
+</g>
+<g>
+<title>me/serce/jmh_generated/AllocateBuffer2_combined_jmhTest.combined_avgt_jmhStub (1,388 samples, 24.20%)</title><rect x="22.3" y="275.0" width="285.6" height="15" fill="#50e150" rx="2" ry="2"/>
+<text x="25.3" y="286.0">me/serce/jmh_generated/AllocateBuffer2..</text>
+</g>
+<g>
+<title>me/serce/AllocateBuffer2.combined (1,383 samples, 24.12%)</title><rect x="23.0" y="259.0" width="284.5" height="15" fill="#5bec5b" rx="2" ry="2"/>
+<text x="26.0" y="270.0">me/serce/AllocateBuffer2.combined</text>
+</g>
+<g>
+<title>java/nio/ByteBuffer.allocate (71 samples, 1.24%)</title><rect x="24.6" y="243.0" width="14.6" height="15" fill="#5bec5b" rx="2" ry="2"/>
+<text x="27.6" y="254.0"></text>
+</g>
+<g>
+<title>java/nio/HeapByteBuffer.&lt;init&gt; (3 samples, 0.05%)</title><rect x="38.6" y="227.0" width="0.6" height="15" fill="#59ea59" rx="2" ry="2"/>
+<text x="41.6" y="238.0"></text>
+</g>
+<g>
+<title>OptoRuntime::new_array_C(Klass*, int, JavaThread*) (3 samples, 0.05%)</title><rect x="38.6" y="211.0" width="0.6" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="41.6" y="222.0"></text>
+</g>
+<g>
+<title>TypeArrayKlass::allocate_common(int, bool, Thread*) (3 samples, 0.05%)</title><rect x="38.6" y="195.0" width="0.6" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="41.6" y="206.0"></text>
+</g>
+<g>
+<title>MemAllocator::allocate() const (3 samples, 0.05%)</title><rect x="38.6" y="179.0" width="0.6" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="41.6" y="190.0"></text>
+</g>
+<g>
+<title>MemAllocator::allocate_inside_tlab_slow(MemAllocator::Allocation&amp;) const (3 samples, 0.05%)</title><rect x="38.6" y="163.0" width="0.6" height="15" fill="#d8d841" rx="2" ry="2"/>
+<text x="41.6" y="174.0"></text>
+</g>
+<g>
+<title>java/nio/ByteBuffer.allocateDirect (1,285 samples, 22.41%)</title><rect x="39.2" y="243.0" width="264.4" height="15" fill="#6bfc6b" rx="2" ry="2"/>
+<text x="42.2" y="254.0">java/nio/ByteBuffer.allocateDirect</text>
+</g>
+<g>
+<title>OptoRuntime::new_instance_C(Klass*, JavaThread*) (5 samples, 0.09%)</title><rect x="43.1" y="227.0" width="1.1" height="15" fill="#dcdc42" rx="2" ry="2"/>
+<text x="46.1" y="238.0"></text>
+</g>
+<g>
+<title>InstanceKlass::allocate_instance(Thread*) (5 samples, 0.09%)</title><rect x="43.1" y="211.0" width="1.1" height="15" fill="#e0e044" rx="2" ry="2"/>
+<text x="46.1" y="222.0"></text>
+</g>
+<g>
+<title>MemAllocator::allocate() const (5 samples, 0.09%)</title><rect x="43.1" y="195.0" width="1.1" height="15" fill="#dcdc42" rx="2" ry="2"/>
+<text x="46.1" y="206.0"></text>
+</g>
+<g>
+<title>MemAllocator::allocate_inside_tlab_slow(MemAllocator::Allocation&amp;) const (4 samples, 0.07%)</title><rect x="43.3" y="179.0" width="0.9" height="15" fill="#d1d13f" rx="2" ry="2"/>
+<text x="46.3" y="190.0"></text>
+</g>
+<g>
+<title>G1CollectedHeap::allocate_new_tlab(unsigned long, unsigned long, unsigned long*) (4 samples, 0.07%)</title><rect x="43.3" y="163.0" width="0.9" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="46.3" y="174.0"></text>
+</g>
+<g>
+<title>G1CollectedHeap::attempt_allocation_slow(unsigned long) (4 samples, 0.07%)</title><rect x="43.3" y="147.0" width="0.9" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="46.3" y="158.0"></text>
+</g>
+<g>
+<title>MutatorAllocRegion::retire(bool) (2 samples, 0.03%)</title><rect x="43.7" y="131.0" width="0.5" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="46.7" y="142.0"></text>
+</g>
+<g>
+<title>G1CollectedHeap::retire_mutator_alloc_region(HeapRegion*, unsigned long) (2 samples, 0.03%)</title><rect x="43.7" y="115.0" width="0.5" height="15" fill="#e1e144" rx="2" ry="2"/>
+<text x="46.7" y="126.0"></text>
+</g>
+<g>
+<title>G1CollectionSet::add_eden_region(HeapRegion*) (2 samples, 0.03%)</title><rect x="43.7" y="99.0" width="0.5" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="46.7" y="110.0"></text>
+</g>
+<g>
+<title>OtherRegionsTable::occupied() const (2 samples, 0.03%)</title><rect x="43.7" y="83.0" width="0.5" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="46.7" y="94.0"></text>
+</g>
+<g>
+<title>java/nio/DirectByteBuffer.&lt;init&gt; (1,252 samples, 21.83%)</title><rect x="44.2" y="227.0" width="257.6" height="15" fill="#5ff05f" rx="2" ry="2"/>
+<text x="47.2" y="238.0">java/nio/DirectByteBuffer.&lt;init&gt;</text>
+</g>
+<g>
+<title>java/nio/Bits.reserveMemory (93 samples, 1.62%)</title><rect x="44.2" y="211.0" width="19.1" height="15" fill="#5ced5c" rx="2" ry="2"/>
+<text x="47.2" y="222.0"></text>
+</g>
+<g>
+<title>java/nio/Bits.tryReserveMemory (93 samples, 1.62%)</title><rect x="44.2" y="195.0" width="19.1" height="15" fill="#5aeb5a" rx="2" ry="2"/>
+<text x="47.2" y="206.0"></text>
+</g>
+<g>
+<title>java/nio/MappedByteBuffer.&lt;init&gt; (8 samples, 0.14%)</title><rect x="63.3" y="211.0" width="1.6" height="15" fill="#65f665" rx="2" ry="2"/>
+<text x="66.3" y="222.0"></text>
+</g>
+<g>
+<title>java/nio/ByteBuffer.&lt;init&gt; (8 samples, 0.14%)</title><rect x="63.3" y="195.0" width="1.6" height="15" fill="#68f968" rx="2" ry="2"/>
+<text x="66.3" y="206.0"></text>
+</g>
+<g>
+<title>java/nio/ByteBuffer.&lt;init&gt; (8 samples, 0.14%)</title><rect x="63.3" y="179.0" width="1.6" height="15" fill="#64f564" rx="2" ry="2"/>
+<text x="66.3" y="190.0"></text>
+</g>
+<g>
+<title>java/nio/Buffer.&lt;init&gt; (8 samples, 0.14%)</title><rect x="63.3" y="163.0" width="1.6" height="15" fill="#54e554" rx="2" ry="2"/>
+<text x="66.3" y="174.0"></text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.allocateMemory (867 samples, 15.12%)</title><rect x="64.9" y="211.0" width="178.4" height="15" fill="#50e150" rx="2" ry="2"/>
+<text x="67.9" y="222.0">jdk/internal/misc/Unsaf..</text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.allocateMemory0 (803 samples, 14.00%)</title><rect x="78.1" y="195.0" width="165.2" height="15" fill="#51e251" rx="2" ry="2"/>
+<text x="81.1" y="206.0">jdk/internal/misc/Uns..</text>
+</g>
+<g>
+<title>/usr/lib/x86_64-linux-gnu/libc-2.31.so (235 samples, 4.10%)</title><rect x="88.6" y="179.0" width="48.4" height="15" fill="#f57575" rx="2" ry="2"/>
+<text x="91.6" y="190.0">/usr..</text>
+</g>
+<g>
+<title>entry_SYSCALL_64_after_hwframe (39 samples, 0.68%)</title><rect x="128.7" y="163.0" width="8.0" height="15" fill="#e68200" rx="2" ry="2"/>
+<text x="131.7" y="174.0"></text>
+</g>
+<g>
+<title>__x64_sys_futex (2 samples, 0.03%)</title><rect x="128.7" y="147.0" width="0.4" height="15" fill="#f38f00" rx="2" ry="2"/>
+<text x="131.7" y="158.0"></text>
+</g>
+<g>
+<title>do_syscall_64 (37 samples, 0.65%)</title><rect x="129.1" y="147.0" width="7.6" height="15" fill="#f69200" rx="2" ry="2"/>
+<text x="132.1" y="158.0"></text>
+</g>
+<g>
+<title>__x64_sys_futex (28 samples, 0.49%)</title><rect x="131.0" y="131.0" width="5.7" height="15" fill="#f28e00" rx="2" ry="2"/>
+<text x="134.0" y="142.0"></text>
+</g>
+<g>
+<title>do_futex (27 samples, 0.47%)</title><rect x="131.2" y="115.0" width="5.5" height="15" fill="#e17d00" rx="2" ry="2"/>
+<text x="134.2" y="126.0"></text>
+</g>
+<g>
+<title>futex_wait (26 samples, 0.45%)</title><rect x="131.4" y="99.0" width="5.3" height="15" fill="#e17d00" rx="2" ry="2"/>
+<text x="134.4" y="110.0"></text>
+</g>
+<g>
+<title>_raw_spin_lock (2 samples, 0.03%)</title><rect x="132.0" y="83.0" width="0.4" height="15" fill="#ea8600" rx="2" ry="2"/>
+<text x="135.0" y="94.0"></text>
+</g>
+<g>
+<title>futex_wait_queue_me (8 samples, 0.14%)</title><rect x="132.4" y="83.0" width="1.7" height="15" fill="#e88400" rx="2" ry="2"/>
+<text x="135.4" y="94.0"></text>
+</g>
+<g>
+<title>schedule (8 samples, 0.14%)</title><rect x="132.4" y="67.0" width="1.7" height="15" fill="#f49000" rx="2" ry="2"/>
+<text x="135.4" y="78.0"></text>
+</g>
+<g>
+<title>__sched_text_start (6 samples, 0.10%)</title><rect x="132.8" y="51.0" width="1.3" height="15" fill="#fa9600" rx="2" ry="2"/>
+<text x="135.8" y="62.0"></text>
+</g>
+<g>
+<title>finish_task_switch (5 samples, 0.09%)</title><rect x="133.0" y="35.0" width="1.1" height="15" fill="#e68200" rx="2" ry="2"/>
+<text x="136.0" y="46.0"></text>
+</g>
+<g>
+<title>futex_wait_setup (13 samples, 0.23%)</title><rect x="134.1" y="83.0" width="2.6" height="15" fill="#eb8700" rx="2" ry="2"/>
+<text x="137.1" y="94.0"></text>
+</g>
+<g>
+<title>get_futex_key (3 samples, 0.05%)</title><rect x="134.9" y="67.0" width="0.6" height="15" fill="#f59100" rx="2" ry="2"/>
+<text x="137.9" y="78.0"></text>
+</g>
+<g>
+<title>get_futex_key_refs.isra.0 (3 samples, 0.05%)</title><rect x="134.9" y="51.0" width="0.6" height="15" fill="#fb9700" rx="2" ry="2"/>
+<text x="137.9" y="62.0"></text>
+</g>
+<g>
+<title>get_futex_value_locked (6 samples, 0.10%)</title><rect x="135.5" y="67.0" width="1.2" height="15" fill="#f49000" rx="2" ry="2"/>
+<text x="138.5" y="78.0"></text>
+</g>
+<g>
+<title>Unsafe_AllocateMemory0 (105 samples, 1.83%)</title><rect x="137.0" y="179.0" width="21.6" height="15" fill="#ea6666" rx="2" ry="2"/>
+<text x="140.0" y="190.0">U..</text>
+</g>
+<g>
+<title>os::malloc(unsigned long, MemoryType) (12 samples, 0.21%)</title><rect x="156.1" y="163.0" width="2.5" height="15" fill="#e2e244" rx="2" ry="2"/>
+<text x="159.1" y="174.0"></text>
+</g>
+<g>
+<title>__libc_malloc (412 samples, 7.18%)</title><rect x="158.6" y="179.0" width="84.7" height="15" fill="#e66161" rx="2" ry="2"/>
+<text x="161.6" y="190.0">__libc_mal..</text>
+</g>
+<g>
+<title>entry_SYSCALL_64_after_hwframe (138 samples, 2.41%)</title><rect x="214.9" y="163.0" width="28.4" height="15" fill="#e58100" rx="2" ry="2"/>
+<text x="217.9" y="174.0">en..</text>
+</g>
+<g>
+<title>__x64_sys_futex (4 samples, 0.07%)</title><rect x="214.9" y="147.0" width="0.9" height="15" fill="#f08c00" rx="2" ry="2"/>
+<text x="217.9" y="158.0"></text>
+</g>
+<g>
+<title>do_syscall_64 (133 samples, 2.32%)</title><rect x="216.0" y="147.0" width="27.3" height="15" fill="#f99500" rx="2" ry="2"/>
+<text x="219.0" y="158.0">d..</text>
+</g>
+<g>
+<title>__x64_sys_futex (72 samples, 1.26%)</title><rect x="228.3" y="131.0" width="14.8" height="15" fill="#f59100" rx="2" ry="2"/>
+<text x="231.3" y="142.0"></text>
+</g>
+<g>
+<title>do_futex (65 samples, 1.13%)</title><rect x="229.7" y="115.0" width="13.4" height="15" fill="#fc9800" rx="2" ry="2"/>
+<text x="232.7" y="126.0"></text>
+</g>
+<g>
+<title>drop_futex_key_refs.isra.0 (2 samples, 0.03%)</title><rect x="230.2" y="99.0" width="0.4" height="15" fill="#e68200" rx="2" ry="2"/>
+<text x="233.2" y="110.0"></text>
+</g>
+<g>
+<title>futex_wake (59 samples, 1.03%)</title><rect x="230.6" y="99.0" width="12.1" height="15" fill="#ec8800" rx="2" ry="2"/>
+<text x="233.6" y="110.0"></text>
+</g>
+<g>
+<title>get_futex_key (9 samples, 0.16%)</title><rect x="233.9" y="83.0" width="1.8" height="15" fill="#f69200" rx="2" ry="2"/>
+<text x="236.9" y="94.0"></text>
+</g>
+<g>
+<title>get_futex_key_refs.isra.0 (4 samples, 0.07%)</title><rect x="234.9" y="67.0" width="0.8" height="15" fill="#fb9700" rx="2" ry="2"/>
+<text x="237.9" y="78.0"></text>
+</g>
+<g>
+<title>wake_up_q (33 samples, 0.58%)</title><rect x="235.9" y="83.0" width="6.8" height="15" fill="#f18d00" rx="2" ry="2"/>
+<text x="238.9" y="94.0"></text>
+</g>
+<g>
+<title>try_to_wake_up (33 samples, 0.58%)</title><rect x="235.9" y="67.0" width="6.8" height="15" fill="#f79300" rx="2" ry="2"/>
+<text x="238.9" y="78.0"></text>
+</g>
+<g>
+<title>__lock_text_start (32 samples, 0.56%)</title><rect x="236.1" y="51.0" width="6.6" height="15" fill="#fc9800" rx="2" ry="2"/>
+<text x="239.1" y="62.0"></text>
+</g>
+<g>
+<title>hash_futex (2 samples, 0.03%)</title><rect x="242.7" y="99.0" width="0.4" height="15" fill="#e78300" rx="2" ry="2"/>
+<text x="245.7" y="110.0"></text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.setMemory (170 samples, 2.96%)</title><rect x="243.3" y="211.0" width="35.0" height="15" fill="#6bfc6b" rx="2" ry="2"/>
+<text x="246.3" y="222.0">jd..</text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.setMemory (170 samples, 2.96%)</title><rect x="243.3" y="195.0" width="35.0" height="15" fill="#60f160" rx="2" ry="2"/>
+<text x="246.3" y="206.0">jd..</text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.allocateMemory0 (3 samples, 0.05%)</title><rect x="243.9" y="179.0" width="0.7" height="15" fill="#6cfd6c" rx="2" ry="2"/>
+<text x="246.9" y="190.0"></text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.setMemory0 (164 samples, 2.86%)</title><rect x="244.6" y="179.0" width="33.7" height="15" fill="#5eef5e" rx="2" ry="2"/>
+<text x="247.6" y="190.0">jd..</text>
+</g>
+<g>
+<title>Copy::fill_to_memory_atomic(void*, unsigned long, unsigned char) (3 samples, 0.05%)</title><rect x="252.8" y="163.0" width="0.6" height="15" fill="#d8d841" rx="2" ry="2"/>
+<text x="255.8" y="174.0"></text>
+</g>
+<g>
+<title>Unsafe_SetMemory0 (121 samples, 2.11%)</title><rect x="253.4" y="163.0" width="24.9" height="15" fill="#fd7f7f" rx="2" ry="2"/>
+<text x="256.4" y="174.0">U..</text>
+</g>
+<g>
+<title>Copy::fill_to_memory_atomic(void*, unsigned long, unsigned char) (21 samples, 0.37%)</title><rect x="274.0" y="147.0" width="4.3" height="15" fill="#dfdf43" rx="2" ry="2"/>
+<text x="277.0" y="158.0"></text>
+</g>
+<g>
+<title>jdk/internal/ref/Cleaner.create (114 samples, 1.99%)</title><rect x="278.3" y="211.0" width="23.5" height="15" fill="#68f968" rx="2" ry="2"/>
+<text x="281.3" y="222.0">j..</text>
+</g>
+<g>
+<title>jdk/internal/ref/Cleaner.add (114 samples, 1.99%)</title><rect x="278.3" y="195.0" width="23.5" height="15" fill="#61f261" rx="2" ry="2"/>
+<text x="281.3" y="206.0">j..</text>
+</g>
+<g>
+<title>SharedRuntime::complete_monitor_locking_C(oopDesc*, BasicLock*, JavaThread*) (3 samples, 0.05%)</title><rect x="300.3" y="179.0" width="0.6" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="303.3" y="190.0"></text>
+</g>
+<g>
+<title>ObjectMonitor::enter(Thread*) (3 samples, 0.05%)</title><rect x="300.3" y="163.0" width="0.6" height="15" fill="#e5e545" rx="2" ry="2"/>
+<text x="303.3" y="174.0"></text>
+</g>
+<g>
+<title>ObjectMonitor::TrySpin(Thread*) [clone .part.64] (2 samples, 0.03%)</title><rect x="300.5" y="147.0" width="0.4" height="15" fill="#e4e445" rx="2" ry="2"/>
+<text x="303.5" y="158.0"></text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.setMemory0 (3 samples, 0.05%)</title><rect x="300.9" y="179.0" width="0.7" height="15" fill="#59ea59" rx="2" ry="2"/>
+<text x="303.9" y="190.0"></text>
+</g>
+<g>
+<title>org/openjdk/jmh/infra/Blackhole.consume (9 samples, 0.16%)</title><rect x="301.8" y="227.0" width="1.8" height="15" fill="#6afb6a" rx="2" ry="2"/>
+<text x="304.8" y="238.0"></text>
+</g>
+<g>
+<title>java/nio/DirectByteBuffer.&lt;init&gt; (2 samples, 0.03%)</title><rect x="303.6" y="243.0" width="0.4" height="15" fill="#61f261" rx="2" ry="2"/>
+<text x="306.6" y="254.0"></text>
+</g>
+<g>
+<title>org/openjdk/jmh/infra/Blackhole.consume (17 samples, 0.30%)</title><rect x="304.0" y="243.0" width="3.5" height="15" fill="#63f463" rx="2" ry="2"/>
+<text x="307.0" y="254.0"></text>
+</g>
+<g>
+<title>org/openjdk/jmh/infra/Blackhole.consume (2 samples, 0.03%)</title><rect x="307.5" y="259.0" width="0.4" height="15" fill="#66f766" rx="2" ry="2"/>
+<text x="310.5" y="270.0"></text>
+</g>
+<g>
+<title>java/lang/ref/Reference$ReferenceHandler.run (1,328 samples, 23.16%)</title><rect x="307.9" y="483.0" width="273.3" height="15" fill="#67f867" rx="2" ry="2"/>
+<text x="310.9" y="494.0">java/lang/ref/Reference$ReferenceHand..</text>
+</g>
+<g>
+<title>java/lang/ref/Reference.processPendingReferences (1,326 samples, 23.12%)</title><rect x="308.1" y="467.0" width="272.9" height="15" fill="#67f867" rx="2" ry="2"/>
+<text x="311.1" y="478.0">java/lang/ref/Reference.processPendi..</text>
+</g>
+<g>
+<title>PtrQueue::enqueue_known_active(void*) (11 samples, 0.19%)</title><rect x="356.5" y="451.0" width="2.3" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="359.5" y="462.0"></text>
+</g>
+<g>
+<title>G1DirtyCardQueue::handle_completed_buffer() (8 samples, 0.14%)</title><rect x="356.5" y="435.0" width="1.6" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="359.5" y="446.0"></text>
+</g>
+<g>
+<title>G1RemSet::refine_card_concurrently(unsigned char*, unsigned int) (8 samples, 0.14%)</title><rect x="356.5" y="419.0" width="1.6" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="359.5" y="430.0"></text>
+</g>
+<g>
+<title>bool HeapRegion::oops_on_card_seq_iterate_careful&lt;false, G1ConcurrentRefineOopClosure&gt;(MemRegion, G1ConcurrentRefineOopClosure*) (8 samples, 0.14%)</title><rect x="356.5" y="403.0" width="1.6" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="359.5" y="414.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1ConcurrentRefineOopClosure&gt;::Table::oop_oop_iterate&lt;InstanceRefKlass, unsigned int&gt;(G1ConcurrentRefineOopClosure*, oopDesc*, Klass*) (5 samples, 0.09%)</title><rect x="357.1" y="387.0" width="1.0" height="15" fill="#dfdf43" rx="2" ry="2"/>
+<text x="360.1" y="398.0"></text>
+</g>
+<g>
+<title>__pthread_mutex_unlock (3 samples, 0.05%)</title><rect x="358.1" y="435.0" width="0.7" height="15" fill="#fa7c7c" rx="2" ry="2"/>
+<text x="361.1" y="446.0"></text>
+</g>
+<g>
+<title>entry_SYSCALL_64_after_hwframe (2 samples, 0.03%)</title><rect x="358.3" y="419.0" width="0.5" height="15" fill="#fb9700" rx="2" ry="2"/>
+<text x="361.3" y="430.0"></text>
+</g>
+<g>
+<title>do_syscall_64 (2 samples, 0.03%)</title><rect x="358.3" y="403.0" width="0.5" height="15" fill="#f49000" rx="2" ry="2"/>
+<text x="361.3" y="414.0"></text>
+</g>
+<g>
+<title>java/lang/Object.notifyAll (175 samples, 3.05%)</title><rect x="358.8" y="451.0" width="36.0" height="15" fill="#5ced5c" rx="2" ry="2"/>
+<text x="361.8" y="462.0">jav..</text>
+</g>
+<g>
+<title>Handle::Handle(Thread*, oopDesc*) (2 samples, 0.03%)</title><rect x="365.5" y="435.0" width="0.5" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="368.5" y="446.0"></text>
+</g>
+<g>
+<title>JVM_MonitorNotifyAll (131 samples, 2.28%)</title><rect x="366.2" y="435.0" width="26.9" height="15" fill="#f27171" rx="2" ry="2"/>
+<text x="369.2" y="446.0">J..</text>
+</g>
+<g>
+<title>Handle::Handle(Thread*, oopDesc*) (7 samples, 0.12%)</title><rect x="369.7" y="419.0" width="1.4" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="372.7" y="430.0"></text>
+</g>
+<g>
+<title>HandleMark::pop_and_restore() (13 samples, 0.23%)</title><rect x="371.1" y="419.0" width="2.7" height="15" fill="#d8d841" rx="2" ry="2"/>
+<text x="374.1" y="430.0"></text>
+</g>
+<g>
+<title>JavaThread::is_lock_owned(unsigned char*) const (2 samples, 0.03%)</title><rect x="373.8" y="419.0" width="0.4" height="15" fill="#cccc3d" rx="2" ry="2"/>
+<text x="376.8" y="430.0"></text>
+</g>
+<g>
+<title>ObjectSynchronizer::notifyall(Handle, Thread*) (22 samples, 0.38%)</title><rect x="374.2" y="419.0" width="4.5" height="15" fill="#d9d941" rx="2" ry="2"/>
+<text x="377.2" y="430.0"></text>
+</g>
+<g>
+<title>BiasedLocking::revoke_and_rebias(Handle, bool, Thread*) (8 samples, 0.14%)</title><rect x="376.7" y="403.0" width="1.6" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="379.7" y="414.0"></text>
+</g>
+<g>
+<title>JavaThread::is_lock_owned(unsigned char*) const (2 samples, 0.03%)</title><rect x="378.3" y="403.0" width="0.4" height="15" fill="#dddd43" rx="2" ry="2"/>
+<text x="381.3" y="414.0"></text>
+</g>
+<g>
+<title>ThreadStateTransition::transition(JavaThread*, JavaThreadState, JavaThreadState) [clone .constprop.204] (17 samples, 0.30%)</title><rect x="378.7" y="419.0" width="3.5" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="381.7" y="430.0"></text>
+</g>
+<g>
+<title>ThreadStateTransition::transition_from_native(JavaThread*, JavaThreadState) [clone .constprop.203] (53 samples, 0.92%)</title><rect x="382.2" y="419.0" width="10.9" height="15" fill="#e0e044" rx="2" ry="2"/>
+<text x="385.2" y="430.0"></text>
+</g>
+<g>
+<title>ObjectSynchronizer::notifyall(Handle, Thread*) (4 samples, 0.07%)</title><rect x="393.1" y="435.0" width="0.8" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="396.1" y="446.0"></text>
+</g>
+<g>
+<title>ThreadStateTransition::transition(JavaThread*, JavaThreadState, JavaThreadState) [clone .constprop.204] (2 samples, 0.03%)</title><rect x="393.9" y="435.0" width="0.4" height="15" fill="#cbcb3d" rx="2" ry="2"/>
+<text x="396.9" y="446.0"></text>
+</g>
+<g>
+<title>ThreadStateTransition::transition_from_native(JavaThread*, JavaThreadState) [clone .constprop.203] (2 samples, 0.03%)</title><rect x="394.3" y="435.0" width="0.5" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="397.3" y="446.0"></text>
+</g>
+<g>
+<title>jdk/internal/ref/Cleaner.clean (904 samples, 15.76%)</title><rect x="395.0" y="451.0" width="186.0" height="15" fill="#5ff05f" rx="2" ry="2"/>
+<text x="398.0" y="462.0">jdk/internal/ref/Cleaner..</text>
+</g>
+<g>
+<title>java/nio/DirectByteBuffer$Deallocator.run (838 samples, 14.61%)</title><rect x="396.8" y="435.0" width="172.4" height="15" fill="#51e251" rx="2" ry="2"/>
+<text x="399.8" y="446.0">java/nio/DirectByteBuf..</text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.freeMemory (838 samples, 14.61%)</title><rect x="396.8" y="419.0" width="172.4" height="15" fill="#68f968" rx="2" ry="2"/>
+<text x="399.8" y="430.0">jdk/internal/misc/Unsa..</text>
+</g>
+<g>
+<title>jdk/internal/misc/Unsafe.freeMemory0 (821 samples, 14.32%)</title><rect x="400.3" y="403.0" width="168.9" height="15" fill="#5bec5b" rx="2" ry="2"/>
+<text x="403.3" y="414.0">jdk/internal/misc/Unsa..</text>
+</g>
+<g>
+<title>/usr/lib/x86_64-linux-gnu/libc-2.31.so (12 samples, 0.21%)</title><rect x="408.8" y="387.0" width="2.4" height="15" fill="#f47373" rx="2" ry="2"/>
+<text x="411.8" y="398.0"></text>
+</g>
+<g>
+<title>Unsafe_FreeMemory0 (80 samples, 1.39%)</title><rect x="411.2" y="387.0" width="16.5" height="15" fill="#ee6c6c" rx="2" ry="2"/>
+<text x="414.2" y="398.0"></text>
+</g>
+<g>
+<title>os::free(void*) (6 samples, 0.10%)</title><rect x="426.4" y="371.0" width="1.3" height="15" fill="#cccc3d" rx="2" ry="2"/>
+<text x="429.4" y="382.0"></text>
+</g>
+<g>
+<title>[unknown] (620 samples, 10.81%)</title><rect x="427.7" y="387.0" width="127.5" height="15" fill="#ed6a6a" rx="2" ry="2"/>
+<text x="430.7" y="398.0">[unknown]</text>
+</g>
+<g>
+<title>/usr/lib/x86_64-linux-gnu/libc-2.31.so (620 samples, 10.81%)</title><rect x="427.7" y="371.0" width="127.5" height="15" fill="#e86363" rx="2" ry="2"/>
+<text x="430.7" y="382.0">/usr/lib/x86_64-..</text>
+</g>
+<g>
+<title>apic_timer_interrupt (2 samples, 0.03%)</title><rect x="515.9" y="355.0" width="0.5" height="15" fill="#ed8900" rx="2" ry="2"/>
+<text x="518.9" y="366.0"></text>
+</g>
+<g>
+<title>smp_apic_timer_interrupt (2 samples, 0.03%)</title><rect x="515.9" y="339.0" width="0.5" height="15" fill="#e17d00" rx="2" ry="2"/>
+<text x="518.9" y="350.0"></text>
+</g>
+<g>
+<title>irq_exit (2 samples, 0.03%)</title><rect x="515.9" y="323.0" width="0.5" height="15" fill="#f69200" rx="2" ry="2"/>
+<text x="518.9" y="334.0"></text>
+</g>
+<g>
+<title>__softirqentry_text_start (2 samples, 0.03%)</title><rect x="515.9" y="307.0" width="0.5" height="15" fill="#f28e00" rx="2" ry="2"/>
+<text x="518.9" y="318.0"></text>
+</g>
+<g>
+<title>entry_SYSCALL_64_after_hwframe (189 samples, 3.30%)</title><rect x="516.4" y="355.0" width="38.8" height="15" fill="#f99500" rx="2" ry="2"/>
+<text x="519.4" y="366.0">ent..</text>
+</g>
+<g>
+<title>__x64_sys_futex (7 samples, 0.12%)</title><rect x="516.4" y="339.0" width="1.4" height="15" fill="#f28e00" rx="2" ry="2"/>
+<text x="519.4" y="350.0"></text>
+</g>
+<g>
+<title>do_syscall_64 (182 samples, 3.17%)</title><rect x="517.8" y="339.0" width="37.4" height="15" fill="#ee8a00" rx="2" ry="2"/>
+<text x="520.8" y="350.0">do_..</text>
+</g>
+<g>
+<title>__x64_sys_futex (124 samples, 2.16%)</title><rect x="529.5" y="323.0" width="25.5" height="15" fill="#ef8b00" rx="2" ry="2"/>
+<text x="532.5" y="334.0">_..</text>
+</g>
+<g>
+<title>do_futex (111 samples, 1.94%)</title><rect x="531.8" y="307.0" width="22.8" height="15" fill="#fe9a00" rx="2" ry="2"/>
+<text x="534.8" y="318.0">d..</text>
+</g>
+<g>
+<title>drop_futex_key_refs.isra.0 (4 samples, 0.07%)</title><rect x="532.4" y="291.0" width="0.8" height="15" fill="#e27e00" rx="2" ry="2"/>
+<text x="535.4" y="302.0"></text>
+</g>
+<g>
+<title>futex_wait (77 samples, 1.34%)</title><rect x="533.2" y="291.0" width="15.9" height="15" fill="#e37f00" rx="2" ry="2"/>
+<text x="536.2" y="302.0"></text>
+</g>
+<g>
+<title>_raw_spin_lock (3 samples, 0.05%)</title><rect x="533.9" y="275.0" width="0.6" height="15" fill="#f49000" rx="2" ry="2"/>
+<text x="536.9" y="286.0"></text>
+</g>
+<g>
+<title>futex_wait_queue_me (48 samples, 0.84%)</title><rect x="534.5" y="275.0" width="9.8" height="15" fill="#f28e00" rx="2" ry="2"/>
+<text x="537.5" y="286.0"></text>
+</g>
+<g>
+<title>schedule (45 samples, 0.78%)</title><rect x="535.1" y="259.0" width="9.2" height="15" fill="#e78300" rx="2" ry="2"/>
+<text x="538.1" y="270.0"></text>
+</g>
+<g>
+<title>__sched_text_start (43 samples, 0.75%)</title><rect x="535.5" y="243.0" width="8.8" height="15" fill="#e78300" rx="2" ry="2"/>
+<text x="538.5" y="254.0"></text>
+</g>
+<g>
+<title>finish_task_switch (39 samples, 0.68%)</title><rect x="536.3" y="227.0" width="8.0" height="15" fill="#f38f00" rx="2" ry="2"/>
+<text x="539.3" y="238.0"></text>
+</g>
+<g>
+<title>futex_wait_setup (22 samples, 0.38%)</title><rect x="544.3" y="275.0" width="4.6" height="15" fill="#fc9800" rx="2" ry="2"/>
+<text x="547.3" y="286.0"></text>
+</g>
+<g>
+<title>get_futex_key (6 samples, 0.10%)</title><rect x="545.6" y="259.0" width="1.2" height="15" fill="#f79300" rx="2" ry="2"/>
+<text x="548.6" y="270.0"></text>
+</g>
+<g>
+<title>get_futex_key_refs.isra.0 (4 samples, 0.07%)</title><rect x="546.0" y="243.0" width="0.8" height="15" fill="#ee8a00" rx="2" ry="2"/>
+<text x="549.0" y="254.0"></text>
+</g>
+<g>
+<title>get_futex_value_locked (9 samples, 0.16%)</title><rect x="547.0" y="259.0" width="1.9" height="15" fill="#ee8a00" rx="2" ry="2"/>
+<text x="550.0" y="270.0"></text>
+</g>
+<g>
+<title>futex_wake (24 samples, 0.42%)</title><rect x="549.1" y="291.0" width="4.9" height="15" fill="#fa9600" rx="2" ry="2"/>
+<text x="552.1" y="302.0"></text>
+</g>
+<g>
+<title>get_futex_key (5 samples, 0.09%)</title><rect x="550.5" y="275.0" width="1.0" height="15" fill="#fd9900" rx="2" ry="2"/>
+<text x="553.5" y="286.0"></text>
+</g>
+<g>
+<title>get_futex_key_refs.isra.0 (5 samples, 0.09%)</title><rect x="550.5" y="259.0" width="1.0" height="15" fill="#fd9900" rx="2" ry="2"/>
+<text x="553.5" y="270.0"></text>
+</g>
+<g>
+<title>wake_up_q (12 samples, 0.21%)</title><rect x="551.5" y="275.0" width="2.5" height="15" fill="#fb9700" rx="2" ry="2"/>
+<text x="554.5" y="286.0"></text>
+</g>
+<g>
+<title>try_to_wake_up (12 samples, 0.21%)</title><rect x="551.5" y="259.0" width="2.5" height="15" fill="#f89400" rx="2" ry="2"/>
+<text x="554.5" y="270.0"></text>
+</g>
+<g>
+<title>__lock_text_start (12 samples, 0.21%)</title><rect x="551.5" y="243.0" width="2.5" height="15" fill="#eb8700" rx="2" ry="2"/>
+<text x="554.5" y="254.0"></text>
+</g>
+<g>
+<title>hash_futex (2 samples, 0.03%)</title><rect x="554.2" y="291.0" width="0.4" height="15" fill="#f18d00" rx="2" ry="2"/>
+<text x="557.2" y="302.0"></text>
+</g>
+<g>
+<title>futex_wake (2 samples, 0.03%)</title><rect x="554.6" y="307.0" width="0.4" height="15" fill="#e78300" rx="2" ry="2"/>
+<text x="557.6" y="318.0"></text>
+</g>
+<g>
+<title>cfree (67 samples, 1.17%)</title><rect x="555.2" y="387.0" width="13.8" height="15" fill="#ef6d6d" rx="2" ry="2"/>
+<text x="558.2" y="398.0"></text>
+</g>
+<g>
+<title>jdk/internal/ref/Cleaner.remove (57 samples, 0.99%)</title><rect x="569.2" y="435.0" width="11.8" height="15" fill="#6cfd6c" rx="2" ry="2"/>
+<text x="572.2" y="446.0"></text>
+</g>
+<g>
+<title>PtrQueue::enqueue_known_active(void*) (7 samples, 0.12%)</title><rect x="579.5" y="419.0" width="1.5" height="15" fill="#d5d540" rx="2" ry="2"/>
+<text x="582.5" y="430.0"></text>
+</g>
+<g>
+<title>SATBMarkQueue::handle_completed_buffer() (7 samples, 0.12%)</title><rect x="579.5" y="403.0" width="1.5" height="15" fill="#e2e244" rx="2" ry="2"/>
+<text x="582.5" y="414.0"></text>
+</g>
+<g>
+<title>G1SATBMarkQueueSet::filter(SATBMarkQueue*) (7 samples, 0.12%)</title><rect x="579.5" y="387.0" width="1.5" height="15" fill="#e5e545" rx="2" ry="2"/>
+<text x="582.5" y="398.0"></text>
+</g>
+<g>
+<title>start_thread (2,959 samples, 51.60%)</title><rect x="581.2" y="483.0" width="608.8" height="15" fill="#e66161" rx="2" ry="2"/>
+<text x="584.2" y="494.0">start_thread</text>
+</g>
+<g>
+<title>thread_native_entry(Thread*) (2,959 samples, 51.60%)</title><rect x="581.2" y="467.0" width="608.8" height="15" fill="#ee6c6c" rx="2" ry="2"/>
+<text x="584.2" y="478.0">thread_native_entry(Thread*)</text>
+</g>
+<g>
+<title>Thread::call_run() (2,959 samples, 51.60%)</title><rect x="581.2" y="451.0" width="608.8" height="15" fill="#dfdf43" rx="2" ry="2"/>
+<text x="584.2" y="462.0">Thread::call_run()</text>
+</g>
+<g>
+<title>ConcurrentGCThread::run() (668 samples, 11.65%)</title><rect x="581.2" y="435.0" width="137.4" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="584.2" y="446.0">ConcurrentGCThrea..</text>
+</g>
+<g>
+<title>G1ConcurrentMarkThread::run_service() (16 samples, 0.28%)</title><rect x="581.2" y="419.0" width="3.3" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="584.2" y="430.0"></text>
+</g>
+<g>
+<title>G1ConcurrentMark::preclean() (16 samples, 0.28%)</title><rect x="581.2" y="403.0" width="3.3" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="584.2" y="414.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::preclean_discovered_references(BoolObjectClosure*, OopClosure*, VoidClosure*, YieldClosure*, GCTimer*) (16 samples, 0.28%)</title><rect x="581.2" y="387.0" width="3.3" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="584.2" y="398.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;573558ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)3, 573558ul&gt;::oop_access_barrier(oopDesc*, long) (7 samples, 0.12%)</title><rect x="581.2" y="371.0" width="1.4" height="15" fill="#e4e445" rx="2" ry="2"/>
+<text x="584.2" y="382.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::preclean_discovered_reflist(DiscoveredList&amp;, BoolObjectClosure*, OopClosure*, VoidClosure*, YieldClosure*) (9 samples, 0.16%)</title><rect x="582.6" y="371.0" width="1.9" height="15" fill="#d1d13f" rx="2" ry="2"/>
+<text x="585.6" y="382.0"></text>
+</g>
+<g>
+<title>G1CMIsAliveClosure::do_object_b(oopDesc*) (6 samples, 0.10%)</title><rect x="583.2" y="355.0" width="1.3" height="15" fill="#d4d440" rx="2" ry="2"/>
+<text x="586.2" y="366.0"></text>
+</g>
+<g>
+<title>G1ConcurrentRefineThread::run_service() (652 samples, 11.37%)</title><rect x="584.5" y="419.0" width="134.1" height="15" fill="#d8d841" rx="2" ry="2"/>
+<text x="587.5" y="430.0">G1ConcurrentRefin..</text>
+</g>
+<g>
+<title>G1DirtyCardQueueSet::refine_completed_buffer_concurrently(unsigned int, unsigned long) (650 samples, 11.33%)</title><rect x="584.5" y="403.0" width="133.7" height="15" fill="#d8d841" rx="2" ry="2"/>
+<text x="587.5" y="414.0">G1DirtyCardQueueS..</text>
+</g>
+<g>
+<title>G1RemSet::refine_card_concurrently(unsigned char*, unsigned int) (644 samples, 11.23%)</title><rect x="585.1" y="387.0" width="132.5" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="588.1" y="398.0">G1RemSet::refine..</text>
+</g>
+<g>
+<title>bool HeapRegion::oops_on_card_seq_iterate_careful&lt;false, G1ConcurrentRefineOopClosure&gt;(MemRegion, G1ConcurrentRefineOopClosure*) (611 samples, 10.65%)</title><rect x="588.4" y="371.0" width="125.7" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="591.4" y="382.0">bool HeapRegion..</text>
+</g>
+<g>
+<title>G1BlockOffsetTablePart::alloc_block_work(HeapWordImpl***, unsigned long*, HeapWordImpl**, HeapWordImpl**) (8 samples, 0.14%)</title><rect x="599.1" y="355.0" width="1.6" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="602.1" y="366.0"></text>
+</g>
+<g>
+<title>G1BlockOffsetTablePart::forward_to_block_containing_addr_slow(HeapWordImpl**, HeapWordImpl**, void const*) (345 samples, 6.02%)</title><rect x="600.7" y="355.0" width="71.0" height="15" fill="#d2d23f" rx="2" ry="2"/>
+<text x="603.7" y="366.0">G1BlockO..</text>
+</g>
+<g>
+<title>G1BlockOffsetTablePart::alloc_block_work(HeapWordImpl***, unsigned long*, HeapWordImpl**, HeapWordImpl**) (15 samples, 0.26%)</title><rect x="627.3" y="339.0" width="3.0" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="630.3" y="350.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_is_obj(HeapWordImpl* const*) const (22 samples, 0.38%)</title><rect x="630.3" y="339.0" width="4.6" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="633.3" y="350.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_size(HeapWordImpl* const*) const (177 samples, 3.09%)</title><rect x="634.9" y="339.0" width="36.4" height="15" fill="#cece3e" rx="2" ry="2"/>
+<text x="637.9" y="350.0">Hea..</text>
+</g>
+<g>
+<title>HeapRegion::block_is_obj(HeapWordImpl* const*) const (66 samples, 1.15%)</title><rect x="657.3" y="323.0" width="13.6" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="660.3" y="334.0"></text>
+</g>
+<g>
+<title>swapgs_restore_regs_and_return_to_usermode (2 samples, 0.03%)</title><rect x="670.9" y="323.0" width="0.4" height="15" fill="#fa9600" rx="2" ry="2"/>
+<text x="673.9" y="334.0"></text>
+</g>
+<g>
+<title>prepare_exit_to_usermode (2 samples, 0.03%)</title><rect x="670.9" y="307.0" width="0.4" height="15" fill="#e48000" rx="2" ry="2"/>
+<text x="673.9" y="318.0"></text>
+</g>
+<g>
+<title>exit_to_usermode_loop (2 samples, 0.03%)</title><rect x="670.9" y="291.0" width="0.4" height="15" fill="#ec8800" rx="2" ry="2"/>
+<text x="673.9" y="302.0"></text>
+</g>
+<g>
+<title>swapgs_restore_regs_and_return_to_usermode (2 samples, 0.03%)</title><rect x="671.3" y="339.0" width="0.4" height="15" fill="#e68200" rx="2" ry="2"/>
+<text x="674.3" y="350.0"></text>
+</g>
+<g>
+<title>prepare_exit_to_usermode (2 samples, 0.03%)</title><rect x="671.3" y="323.0" width="0.4" height="15" fill="#f49000" rx="2" ry="2"/>
+<text x="674.3" y="334.0"></text>
+</g>
+<g>
+<title>exit_to_usermode_loop (2 samples, 0.03%)</title><rect x="671.3" y="307.0" width="0.4" height="15" fill="#f28e00" rx="2" ry="2"/>
+<text x="674.3" y="318.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_size(HeapWordImpl* const*) const (27 samples, 0.47%)</title><rect x="671.9" y="355.0" width="5.6" height="15" fill="#dcdc42" rx="2" ry="2"/>
+<text x="674.9" y="366.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_is_obj(HeapWordImpl* const*) const (6 samples, 0.10%)</title><rect x="676.2" y="339.0" width="1.3" height="15" fill="#d9d941" rx="2" ry="2"/>
+<text x="679.2" y="350.0"></text>
+</g>
+<g>
+<title>Klass::start_of_vtable() const (5 samples, 0.09%)</title><rect x="677.5" y="355.0" width="1.0" height="15" fill="#c9c93c" rx="2" ry="2"/>
+<text x="680.5" y="366.0"></text>
+</g>
+<g>
+<title>MarkBitMap::get_next_marked_addr(HeapWordImpl* const*, HeapWordImpl* const*) const (8 samples, 0.14%)</title><rect x="678.5" y="355.0" width="1.6" height="15" fill="#d8d841" rx="2" ry="2"/>
+<text x="681.5" y="366.0"></text>
+</g>
+<g>
+<title>oopDesc::size() (4 samples, 0.07%)</title><rect x="680.3" y="355.0" width="0.9" height="15" fill="#d8d841" rx="2" ry="2"/>
+<text x="683.3" y="366.0"></text>
+</g>
+<g>
+<title>void G1ConcurrentRefineOopClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) [clone .isra.229] (5 samples, 0.09%)</title><rect x="681.2" y="355.0" width="1.0" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="684.2" y="366.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1ConcurrentRefineOopClosure&gt;::Table::oop_oop_iterate&lt;InstanceKlass, unsigned int&gt;(G1ConcurrentRefineOopClosure*, oopDesc*, Klass*) (8 samples, 0.14%)</title><rect x="682.2" y="355.0" width="1.6" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="685.2" y="366.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1ConcurrentRefineOopClosure&gt;::Table::oop_oop_iterate&lt;InstanceRefKlass, unsigned int&gt;(G1ConcurrentRefineOopClosure*, oopDesc*, Klass*) (147 samples, 2.56%)</title><rect x="683.8" y="355.0" width="30.3" height="15" fill="#d2d23f" rx="2" ry="2"/>
+<text x="686.8" y="366.0">vo..</text>
+</g>
+<g>
+<title>OtherRegionsTable::add_reference(void*, unsigned int) (15 samples, 0.26%)</title><rect x="710.6" y="339.0" width="3.1" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="713.6" y="350.0"></text>
+</g>
+<g>
+<title>BitMap::par_at_put(unsigned long, bool) (6 samples, 0.10%)</title><rect x="712.4" y="323.0" width="1.3" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="715.4" y="334.0"></text>
+</g>
+<g>
+<title>void G1ConcurrentRefineOopClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) [clone .isra.229] (2 samples, 0.03%)</title><rect x="713.7" y="339.0" width="0.4" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="716.7" y="350.0"></text>
+</g>
+<g>
+<title>oopDesc::size() (5 samples, 0.09%)</title><rect x="714.1" y="371.0" width="1.0" height="15" fill="#dfdf43" rx="2" ry="2"/>
+<text x="717.1" y="382.0"></text>
+</g>
+<g>
+<title>oopDesc::size_given_klass(Klass*) (5 samples, 0.09%)</title><rect x="715.1" y="371.0" width="1.0" height="15" fill="#e2e244" rx="2" ry="2"/>
+<text x="718.1" y="382.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1ConcurrentRefineOopClosure&gt;::Table::oop_oop_iterate&lt;InstanceKlass, unsigned int&gt;(G1ConcurrentRefineOopClosure*, oopDesc*, Klass*) (4 samples, 0.07%)</title><rect x="716.4" y="371.0" width="0.8" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="719.4" y="382.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1ConcurrentRefineOopClosure&gt;::Table::oop_oop_iterate&lt;InstanceRefKlass, unsigned int&gt;(G1ConcurrentRefineOopClosure*, oopDesc*, Klass*) (2 samples, 0.03%)</title><rect x="717.2" y="371.0" width="0.4" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="720.2" y="382.0"></text>
+</g>
+<g>
+<title>G1RemSet::refine_card_concurrently(unsigned char*, unsigned int) (2 samples, 0.03%)</title><rect x="718.2" y="403.0" width="0.4" height="15" fill="#d5d540" rx="2" ry="2"/>
+<text x="721.2" y="414.0"></text>
+</g>
+<g>
+<title>GangWorker::loop() (2,279 samples, 39.74%)</title><rect x="718.6" y="435.0" width="468.9" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="721.6" y="446.0">GangWorker::loop()</text>
+</g>
+<g>
+<title>G1CMConcurrentMarkingTask::work(unsigned int) (191 samples, 3.33%)</title><rect x="718.6" y="419.0" width="39.3" height="15" fill="#dfdf43" rx="2" ry="2"/>
+<text x="721.6" y="430.0">G1C..</text>
+</g>
+<g>
+<title>G1CMTask::do_marking_step(double, bool, bool) (190 samples, 3.31%)</title><rect x="718.6" y="403.0" width="39.1" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="721.6" y="414.0">G1C..</text>
+</g>
+<g>
+<title>G1CMBitMapClosure::do_addr(HeapWordImpl**) (38 samples, 0.66%)</title><rect x="719.4" y="387.0" width="7.9" height="15" fill="#e4e445" rx="2" ry="2"/>
+<text x="722.4" y="398.0"></text>
+</g>
+<g>
+<title>G1CMTask::drain_local_queue(bool) [clone .part.157] (3 samples, 0.05%)</title><rect x="719.6" y="371.0" width="0.7" height="15" fill="#cccc3d" rx="2" ry="2"/>
+<text x="722.6" y="382.0"></text>
+</g>
+<g>
+<title>void G1CMTask::process_grey_task_entry&lt;true&gt;(G1TaskQueueEntry) (33 samples, 0.58%)</title><rect x="720.3" y="371.0" width="6.8" height="15" fill="#d0d03e" rx="2" ry="2"/>
+<text x="723.3" y="382.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1CMOopClosure&gt;::Table::oop_oop_iterate&lt;InstanceKlass, unsigned int&gt;(G1CMOopClosure*, oopDesc*, Klass*) (2 samples, 0.03%)</title><rect x="720.9" y="355.0" width="0.4" height="15" fill="#e2e244" rx="2" ry="2"/>
+<text x="723.9" y="366.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1CMOopClosure&gt;::Table::oop_oop_iterate&lt;InstanceRefKlass, unsigned int&gt;(G1CMOopClosure*, oopDesc*, Klass*) (28 samples, 0.49%)</title><rect x="721.3" y="355.0" width="5.8" height="15" fill="#d2d23f" rx="2" ry="2"/>
+<text x="724.3" y="366.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;567350ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)4, 567350ul&gt;::oop_access_barrier(oopDesc*, void*, oopDesc*) (3 samples, 0.05%)</title><rect x="722.1" y="339.0" width="0.6" height="15" fill="#e2e244" rx="2" ry="2"/>
+<text x="725.1" y="350.0"></text>
+</g>
+<g>
+<title>G1CMSubjectToDiscoveryClosure::do_object_b(oopDesc*) (2 samples, 0.03%)</title><rect x="722.7" y="339.0" width="0.4" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="725.7" y="350.0"></text>
+</g>
+<g>
+<title>G1CMTask::make_reference_grey(oopDesc*) (10 samples, 0.17%)</title><rect x="723.1" y="339.0" width="2.1" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="726.1" y="350.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::discover_reference(oopDesc*, ReferenceType) (6 samples, 0.10%)</title><rect x="725.2" y="339.0" width="1.2" height="15" fill="#d0d03e" rx="2" ry="2"/>
+<text x="728.2" y="350.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;567350ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)4, 567350ul&gt;::oop_access_barrier(oopDesc*, void*, oopDesc*) (3 samples, 0.05%)</title><rect x="725.4" y="323.0" width="0.6" height="15" fill="#e4e445" rx="2" ry="2"/>
+<text x="728.4" y="334.0"></text>
+</g>
+<g>
+<title>PtrQueue::enqueue_known_active(void*) (3 samples, 0.05%)</title><rect x="725.4" y="307.0" width="0.6" height="15" fill="#cbcb3d" rx="2" ry="2"/>
+<text x="728.4" y="318.0"></text>
+</g>
+<g>
+<title>__pthread_mutex_unlock (2 samples, 0.03%)</title><rect x="725.6" y="291.0" width="0.4" height="15" fill="#fa7c7c" rx="2" ry="2"/>
+<text x="728.6" y="302.0"></text>
+</g>
+<g>
+<title>entry_SYSCALL_64_after_hwframe (2 samples, 0.03%)</title><rect x="725.6" y="275.0" width="0.4" height="15" fill="#f38f00" rx="2" ry="2"/>
+<text x="728.6" y="286.0"></text>
+</g>
+<g>
+<title>do_syscall_64 (2 samples, 0.03%)</title><rect x="725.6" y="259.0" width="0.4" height="15" fill="#f69200" rx="2" ry="2"/>
+<text x="728.6" y="270.0"></text>
+</g>
+<g>
+<title>G1BarrierSet::write_ref_field_post_slow(unsigned char volatile*) (2 samples, 0.03%)</title><rect x="726.0" y="323.0" width="0.4" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="729.0" y="334.0"></text>
+</g>
+<g>
+<title>G1CMTask::drain_local_queue(bool) [clone .part.157] (139 samples, 2.42%)</title><rect x="727.5" y="387.0" width="28.6" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="730.5" y="398.0">G1..</text>
+</g>
+<g>
+<title>void G1CMTask::process_grey_task_entry&lt;true&gt;(G1TaskQueueEntry) (130 samples, 2.27%)</title><rect x="729.3" y="371.0" width="26.8" height="15" fill="#d0d03e" rx="2" ry="2"/>
+<text x="732.3" y="382.0">v..</text>
+</g>
+<g>
+<title>ClassLoaderData::oops_do(OopClosure*, int, bool) (3 samples, 0.05%)</title><rect x="730.1" y="355.0" width="0.7" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="733.1" y="366.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1CMOopClosure&gt;::Table::oop_oop_iterate&lt;InstanceKlass, unsigned int&gt;(G1CMOopClosure*, oopDesc*, Klass*) (4 samples, 0.07%)</title><rect x="731.2" y="355.0" width="0.8" height="15" fill="#cece3e" rx="2" ry="2"/>
+<text x="734.2" y="366.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1CMOopClosure&gt;::Table::oop_oop_iterate&lt;InstanceRefKlass, unsigned int&gt;(G1CMOopClosure*, oopDesc*, Klass*) (117 samples, 2.04%)</title><rect x="732.0" y="355.0" width="24.1" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="735.0" y="366.0">v..</text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;567350ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)4, 567350ul&gt;::oop_access_barrier(oopDesc*, void*, oopDesc*) (6 samples, 0.10%)</title><rect x="734.7" y="339.0" width="1.2" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="737.7" y="350.0"></text>
+</g>
+<g>
+<title>G1CMTask::make_reference_grey(oopDesc*) (53 samples, 0.92%)</title><rect x="736.1" y="339.0" width="10.9" height="15" fill="#cbcb3d" rx="2" ry="2"/>
+<text x="739.1" y="350.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::discover_reference(oopDesc*, ReferenceType) (37 samples, 0.65%)</title><rect x="747.0" y="339.0" width="7.6" height="15" fill="#cece3e" rx="2" ry="2"/>
+<text x="750.0" y="350.0"></text>
+</g>
+<g>
+<title>G1BarrierSet::write_ref_field_post_slow(unsigned char volatile*) (6 samples, 0.10%)</title><rect x="751.5" y="323.0" width="1.3" height="15" fill="#e4e445" rx="2" ry="2"/>
+<text x="754.5" y="334.0"></text>
+</g>
+<g>
+<title>G1CMIsAliveClosure::do_object_b(oopDesc*) (2 samples, 0.03%)</title><rect x="752.8" y="323.0" width="0.4" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="755.8" y="334.0"></text>
+</g>
+<g>
+<title>G1CMSubjectToDiscoveryClosure::do_object_b(oopDesc*) (6 samples, 0.10%)</title><rect x="753.2" y="323.0" width="1.2" height="15" fill="#cccc3d" rx="2" ry="2"/>
+<text x="756.2" y="334.0"></text>
+</g>
+<g>
+<title>WorkerThread::as_Worker_thread() const (2 samples, 0.03%)</title><rect x="754.6" y="339.0" width="0.4" height="15" fill="#cbcb3d" rx="2" ry="2"/>
+<text x="757.6" y="350.0"></text>
+</g>
+<g>
+<title>oopDesc::size() (4 samples, 0.07%)</title><rect x="755.2" y="339.0" width="0.9" height="15" fill="#d5d540" rx="2" ry="2"/>
+<text x="758.2" y="350.0"></text>
+</g>
+<g>
+<title>GenericTaskQueue&lt;G1TaskQueueEntry, (MemoryType)5, 131072u&gt;::pop_local(G1TaskQueueEntry volatile&amp;, unsigned int) (7 samples, 0.12%)</title><rect x="756.3" y="387.0" width="1.4" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="759.3" y="398.0"></text>
+</g>
+<g>
+<title>G1CMRefProcTaskProxy::work(unsigned int) (25 samples, 0.44%)</title><rect x="757.9" y="419.0" width="5.2" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="760.9" y="430.0"></text>
+</g>
+<g>
+<title>RefProcPhase4Task::work(unsigned int, BoolObjectClosure&amp;, OopClosure&amp;, VoidClosure&amp;) (25 samples, 0.44%)</title><rect x="757.9" y="403.0" width="5.2" height="15" fill="#cbcb3d" rx="2" ry="2"/>
+<text x="760.9" y="414.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;573558ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)3, 573558ul&gt;::oop_access_barrier(oopDesc*, long) (6 samples, 0.10%)</title><rect x="757.9" y="387.0" width="1.3" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="760.9" y="398.0"></text>
+</g>
+<g>
+<title>G1BarrierSet::write_ref_field_post_slow(unsigned char volatile*) (6 samples, 0.10%)</title><rect x="759.2" y="387.0" width="1.2" height="15" fill="#caca3c" rx="2" ry="2"/>
+<text x="762.2" y="398.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::process_phantom_refs_work(DiscoveredList&amp;, BoolObjectClosure*, OopClosure*, VoidClosure*) (12 samples, 0.21%)</title><rect x="760.6" y="387.0" width="2.5" height="15" fill="#d3d33f" rx="2" ry="2"/>
+<text x="763.6" y="398.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;565366ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)1, 565366ul&gt;::oop_access_barrier(oopDesc*, long, oopDesc*) (2 samples, 0.03%)</title><rect x="761.4" y="371.0" width="0.4" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="764.4" y="382.0"></text>
+</g>
+<g>
+<title>G1CMIsAliveClosure::do_object_b(oopDesc*) (3 samples, 0.05%)</title><rect x="762.2" y="371.0" width="0.7" height="15" fill="#d5d540" rx="2" ry="2"/>
+<text x="765.2" y="382.0"></text>
+</g>
+<g>
+<title>G1CMRootRegionScanTask::work(unsigned int) (9 samples, 0.16%)</title><rect x="763.1" y="419.0" width="1.8" height="15" fill="#d0d03e" rx="2" ry="2"/>
+<text x="766.1" y="430.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1RootRegionScanClosure&gt;::Table::oop_oop_iterate&lt;InstanceRefKlass, unsigned int&gt;(G1RootRegionScanClosure*, oopDesc*, Klass*) (5 samples, 0.09%)</title><rect x="763.9" y="403.0" width="1.0" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="766.9" y="414.0"></text>
+</g>
+<g>
+<title>G1EvacuateRegionsBaseTask::work(unsigned int) (1,707 samples, 29.76%)</title><rect x="764.9" y="419.0" width="351.2" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="767.9" y="430.0">G1EvacuateRegionsBaseTask::work(unsigned int)</text>
+</g>
+<g>
+<title>G1EvacuateOptionalRegionsTask::evacuate_live_objects(G1ParScanThreadState*, unsigned int) (7 samples, 0.12%)</title><rect x="764.9" y="403.0" width="1.5" height="15" fill="#d8d841" rx="2" ry="2"/>
+<text x="767.9" y="414.0"></text>
+</g>
+<g>
+<title>G1ParEvacuateFollowersClosure::do_void() (7 samples, 0.12%)</title><rect x="764.9" y="387.0" width="1.5" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="767.9" y="398.0"></text>
+</g>
+<g>
+<title>G1ParScanThreadState::trim_queue() (6 samples, 0.10%)</title><rect x="765.1" y="371.0" width="1.3" height="15" fill="#c9c93c" rx="2" ry="2"/>
+<text x="768.1" y="382.0"></text>
+</g>
+<g>
+<title>G1ParScanThreadState::copy_to_survivor_space(G1HeapRegionAttr, oopDesc*, markOopDesc*) (5 samples, 0.09%)</title><rect x="765.1" y="355.0" width="1.0" height="15" fill="#d4d440" rx="2" ry="2"/>
+<text x="768.1" y="366.0"></text>
+</g>
+<g>
+<title>void OopOopIterateBackwardsDispatch&lt;G1ScanEvacuatedObjClosure&gt;::Table::oop_oop_iterate_backwards&lt;InstanceRefKlass, unsigned int&gt;(G1ScanEvacuatedObjClosure*, oopDesc*, Klass*) (4 samples, 0.07%)</title><rect x="765.3" y="339.0" width="0.8" height="15" fill="#e0e044" rx="2" ry="2"/>
+<text x="768.3" y="350.0"></text>
+</g>
+<g>
+<title>void G1ScanEvacuatedObjClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) (2 samples, 0.03%)</title><rect x="765.7" y="323.0" width="0.4" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="768.7" y="334.0"></text>
+</g>
+<g>
+<title>G1EvacuateRegionsTask::evacuate_live_objects(G1ParScanThreadState*, unsigned int) (1,243 samples, 21.67%)</title><rect x="766.4" y="403.0" width="255.7" height="15" fill="#d2d23f" rx="2" ry="2"/>
+<text x="769.4" y="414.0">G1EvacuateRegionsTask::evacuate_li..</text>
+</g>
+<g>
+<title>G1ParEvacuateFollowersClosure::do_void() (1,243 samples, 21.67%)</title><rect x="766.4" y="387.0" width="255.7" height="15" fill="#e5e545" rx="2" ry="2"/>
+<text x="769.4" y="398.0">G1ParEvacuateFollowersClosure::do_..</text>
+</g>
+<g>
+<title>G1ParScanThreadState::copy_to_survivor_space(G1HeapRegionAttr, oopDesc*, markOopDesc*) (14 samples, 0.24%)</title><rect x="767.8" y="371.0" width="2.9" height="15" fill="#c9c93c" rx="2" ry="2"/>
+<text x="770.8" y="382.0"></text>
+</g>
+<g>
+<title>G1ParScanThreadState::trim_queue() (1,221 samples, 21.29%)</title><rect x="770.7" y="371.0" width="251.2" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="773.7" y="382.0">G1ParScanThreadState::trim_queue()</text>
+</g>
+<g>
+<title>G1ParScanThreadState::copy_to_survivor_space(G1HeapRegionAttr, oopDesc*, markOopDesc*) (728 samples, 12.69%)</title><rect x="869.4" y="355.0" width="149.8" height="15" fill="#cece3e" rx="2" ry="2"/>
+<text x="872.4" y="366.0">G1ParScanThreadStat..</text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;663670ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)2, 663670ul&gt;::oop_access_barrier(void*) (12 samples, 0.21%)</title><rect x="922.5" y="339.0" width="2.5" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="925.5" y="350.0"></text>
+</g>
+<g>
+<title>G1PLABAllocator::allocate_direct_or_new_plab(G1HeapRegionAttr, unsigned long, bool*) (2 samples, 0.03%)</title><rect x="925.2" y="339.0" width="0.4" height="15" fill="#dcdc42" rx="2" ry="2"/>
+<text x="928.2" y="350.0"></text>
+</g>
+<g>
+<title>G1Allocator::survivor_attempt_allocation(unsigned long, unsigned long, unsigned long*) (2 samples, 0.03%)</title><rect x="925.2" y="323.0" width="0.4" height="15" fill="#d1d13f" rx="2" ry="2"/>
+<text x="928.2" y="334.0"></text>
+</g>
+<g>
+<title>Klass::start_of_vtable() const (3 samples, 0.05%)</title><rect x="925.6" y="339.0" width="0.6" height="15" fill="#e2e244" rx="2" ry="2"/>
+<text x="928.6" y="350.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::discover_reference(oopDesc*, ReferenceType) (5 samples, 0.09%)</title><rect x="926.2" y="339.0" width="1.1" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="929.2" y="350.0"></text>
+</g>
+<g>
+<title>void G1ScanEvacuatedObjClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) (23 samples, 0.40%)</title><rect x="927.3" y="339.0" width="4.7" height="15" fill="#d2d23f" rx="2" ry="2"/>
+<text x="930.3" y="350.0"></text>
+</g>
+<g>
+<title>void OopOopIterateBackwardsDispatch&lt;G1ScanEvacuatedObjClosure&gt;::Table::oop_oop_iterate_backwards&lt;InstanceKlass, unsigned int&gt;(G1ScanEvacuatedObjClosure*, oopDesc*, Klass*) (23 samples, 0.40%)</title><rect x="932.0" y="339.0" width="4.7" height="15" fill="#c9c93c" rx="2" ry="2"/>
+<text x="935.0" y="350.0"></text>
+</g>
+<g>
+<title>Klass::start_of_vtable() const (2 samples, 0.03%)</title><rect x="936.3" y="323.0" width="0.4" height="15" fill="#dfdf43" rx="2" ry="2"/>
+<text x="939.3" y="334.0"></text>
+</g>
+<g>
+<title>void OopOopIterateBackwardsDispatch&lt;G1ScanEvacuatedObjClosure&gt;::Table::oop_oop_iterate_backwards&lt;InstanceRefKlass, unsigned int&gt;(G1ScanEvacuatedObjClosure*, oopDesc*, Klass*) (401 samples, 6.99%)</title><rect x="936.7" y="339.0" width="82.5" height="15" fill="#e0e044" rx="2" ry="2"/>
+<text x="939.7" y="350.0">void OopO..</text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;567350ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)4, 567350ul&gt;::oop_access_barrier(oopDesc*, void*, oopDesc*) (33 samples, 0.58%)</title><rect x="977.5" y="323.0" width="6.7" height="15" fill="#dcdc42" rx="2" ry="2"/>
+<text x="980.5" y="334.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;573558ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)3, 573558ul&gt;::oop_access_barrier(oopDesc*, long) (2 samples, 0.03%)</title><rect x="984.2" y="323.0" width="0.5" height="15" fill="#dcdc42" rx="2" ry="2"/>
+<text x="987.2" y="334.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;663670ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)2, 663670ul&gt;::oop_access_barrier(void*) (5 samples, 0.09%)</title><rect x="984.7" y="323.0" width="1.0" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="987.7" y="334.0"></text>
+</g>
+<g>
+<title>G1CardTable::mark_card_deferred(unsigned long) (4 samples, 0.07%)</title><rect x="985.7" y="323.0" width="0.8" height="15" fill="#d1d13f" rx="2" ry="2"/>
+<text x="988.7" y="334.0"></text>
+</g>
+<g>
+<title>G1STWSubjectToDiscoveryClosure::do_object_b(oopDesc*) (25 samples, 0.44%)</title><rect x="986.7" y="323.0" width="5.2" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="989.7" y="334.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::discover_reference(oopDesc*, ReferenceType) (91 samples, 1.59%)</title><rect x="992.1" y="323.0" width="18.7" height="15" fill="#d0d03e" rx="2" ry="2"/>
+<text x="995.1" y="334.0"></text>
+</g>
+<g>
+<title>/usr/lib/x86_64-linux-gnu/ld-2.31.so (18 samples, 0.31%)</title><rect x="1003.2" y="307.0" width="3.7" height="15" fill="#f97a7a" rx="2" ry="2"/>
+<text x="1006.2" y="318.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;573558ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)3, 573558ul&gt;::oop_access_barrier(oopDesc*, long) (3 samples, 0.05%)</title><rect x="1006.9" y="307.0" width="0.6" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="1009.9" y="318.0"></text>
+</g>
+<g>
+<title>G1STWIsAliveClosure::do_object_b(oopDesc*) (5 samples, 0.09%)</title><rect x="1007.5" y="307.0" width="1.0" height="15" fill="#d9d941" rx="2" ry="2"/>
+<text x="1010.5" y="318.0"></text>
+</g>
+<g>
+<title>G1STWSubjectToDiscoveryClosure::do_object_b(oopDesc*) (6 samples, 0.10%)</title><rect x="1008.5" y="307.0" width="1.3" height="15" fill="#c9c93c" rx="2" ry="2"/>
+<text x="1011.5" y="318.0"></text>
+</g>
+<g>
+<title>__tls_get_addr (5 samples, 0.09%)</title><rect x="1009.8" y="307.0" width="1.0" height="15" fill="#e45e5e" rx="2" ry="2"/>
+<text x="1012.8" y="318.0"></text>
+</g>
+<g>
+<title>WorkerThread::as_Worker_thread() const (9 samples, 0.16%)</title><rect x="1010.8" y="323.0" width="1.8" height="15" fill="#cccc3d" rx="2" ry="2"/>
+<text x="1013.8" y="334.0"></text>
+</g>
+<g>
+<title>__tls_get_addr (13 samples, 0.23%)</title><rect x="1012.6" y="323.0" width="2.7" height="15" fill="#e86363" rx="2" ry="2"/>
+<text x="1015.6" y="334.0"></text>
+</g>
+<g>
+<title>void G1ScanEvacuatedObjClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) (19 samples, 0.33%)</title><rect x="1015.3" y="323.0" width="3.9" height="15" fill="#cccc3d" rx="2" ry="2"/>
+<text x="1018.3" y="334.0"></text>
+</g>
+<g>
+<title>void G1ScanEvacuatedObjClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) (3 samples, 0.05%)</title><rect x="1019.4" y="355.0" width="0.6" height="15" fill="#d9d941" rx="2" ry="2"/>
+<text x="1022.4" y="366.0"></text>
+</g>
+<g>
+<title>void OopOopIterateBackwardsDispatch&lt;G1ScanEvacuatedObjClosure&gt;::Table::oop_oop_iterate_backwards&lt;InstanceRefKlass, unsigned int&gt;(G1ScanEvacuatedObjClosure*, oopDesc*, Klass*) (8 samples, 0.14%)</title><rect x="1020.3" y="355.0" width="1.6" height="15" fill="#c9c93c" rx="2" ry="2"/>
+<text x="1023.3" y="366.0"></text>
+</g>
+<g>
+<title>G1EvacuateRegionsTask::scan_roots(G1ParScanThreadState*, unsigned int) (424 samples, 7.39%)</title><rect x="1022.1" y="403.0" width="87.2" height="15" fill="#e2e244" rx="2" ry="2"/>
+<text x="1025.1" y="414.0">G1Evacuate..</text>
+</g>
+<g>
+<title>G1RemSet::update_rem_set(G1ParScanThreadState*, unsigned int) (413 samples, 7.20%)</title><rect x="1022.1" y="387.0" width="85.0" height="15" fill="#e4e445" rx="2" ry="2"/>
+<text x="1025.1" y="398.0">G1RemSet::..</text>
+</g>
+<g>
+<title>G1CollectedHeap::iterate_dirty_card_closure(G1CardTableEntryClosure*, unsigned int) (413 samples, 7.20%)</title><rect x="1022.1" y="371.0" width="85.0" height="15" fill="#c9c93c" rx="2" ry="2"/>
+<text x="1025.1" y="382.0">G1Collecte..</text>
+</g>
+<g>
+<title>G1DirtyCardQueueSet::apply_closure_during_gc(G1CardTableEntryClosure*, unsigned int) (412 samples, 7.18%)</title><rect x="1022.1" y="355.0" width="84.8" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="1025.1" y="366.0">G1DirtyCar..</text>
+</g>
+<g>
+<title>G1RefineCardClosure::do_card_ptr(unsigned char*, unsigned int) (408 samples, 7.11%)</title><rect x="1022.1" y="339.0" width="84.0" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="1025.1" y="350.0">G1RefineC..</text>
+</g>
+<g>
+<title>G1RemSet::refine_card_during_gc(unsigned char*, G1ScanCardClosure*) (406 samples, 7.08%)</title><rect x="1022.5" y="323.0" width="83.6" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="1025.5" y="334.0">G1RemSet:..</text>
+</g>
+<g>
+<title>bool HeapRegion::oops_on_card_seq_iterate_careful&lt;true, G1ScanCardClosure&gt;(MemRegion, G1ScanCardClosure*) (400 samples, 6.97%)</title><rect x="1022.7" y="307.0" width="82.3" height="15" fill="#d9d941" rx="2" ry="2"/>
+<text x="1025.7" y="318.0">bool Heap..</text>
+</g>
+<g>
+<title>G1BlockOffsetTablePart::forward_to_block_containing_addr_slow(HeapWordImpl**, HeapWordImpl**, void const*) (225 samples, 3.92%)</title><rect x="1028.3" y="291.0" width="46.3" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="1031.3" y="302.0">G1Bl..</text>
+</g>
+<g>
+<title>G1BlockOffsetTablePart::alloc_block_work(HeapWordImpl***, unsigned long*, HeapWordImpl**, HeapWordImpl**) (16 samples, 0.28%)</title><rect x="1043.7" y="275.0" width="3.3" height="15" fill="#d9d941" rx="2" ry="2"/>
+<text x="1046.7" y="286.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_is_obj(HeapWordImpl* const*) const (19 samples, 0.33%)</title><rect x="1047.0" y="275.0" width="3.9" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="1050.0" y="286.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_size(HeapWordImpl* const*) const (115 samples, 2.01%)</title><rect x="1050.9" y="275.0" width="23.7" height="15" fill="#e0e044" rx="2" ry="2"/>
+<text x="1053.9" y="286.0">H..</text>
+</g>
+<g>
+<title>HeapRegion::block_is_obj(HeapWordImpl* const*) const (55 samples, 0.96%)</title><rect x="1063.3" y="259.0" width="11.3" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="1066.3" y="270.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_size(HeapWordImpl* const*) const (20 samples, 0.35%)</title><rect x="1074.6" y="291.0" width="4.1" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="1077.6" y="302.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_is_obj(HeapWordImpl* const*) const (2 samples, 0.03%)</title><rect x="1078.3" y="275.0" width="0.4" height="15" fill="#d9d941" rx="2" ry="2"/>
+<text x="1081.3" y="286.0"></text>
+</g>
+<g>
+<title>Klass::start_of_vtable() const (2 samples, 0.03%)</title><rect x="1078.7" y="291.0" width="0.4" height="15" fill="#dddd43" rx="2" ry="2"/>
+<text x="1081.7" y="302.0"></text>
+</g>
+<g>
+<title>MarkBitMap::get_next_marked_addr(HeapWordImpl* const*, HeapWordImpl* const*) const (6 samples, 0.10%)</title><rect x="1079.1" y="291.0" width="1.2" height="15" fill="#cece3e" rx="2" ry="2"/>
+<text x="1082.1" y="302.0"></text>
+</g>
+<g>
+<title>oopDesc::size() (4 samples, 0.07%)</title><rect x="1080.3" y="291.0" width="0.9" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="1083.3" y="302.0"></text>
+</g>
+<g>
+<title>oopDesc::size_given_klass(Klass*) (3 samples, 0.05%)</title><rect x="1081.2" y="291.0" width="0.6" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="1084.2" y="302.0"></text>
+</g>
+<g>
+<title>void G1ScanCardClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) (14 samples, 0.24%)</title><rect x="1081.8" y="291.0" width="2.9" height="15" fill="#d8d841" rx="2" ry="2"/>
+<text x="1084.8" y="302.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1ScanCardClosure&gt;::Table::oop_oop_iterate&lt;InstanceKlass, unsigned int&gt;(G1ScanCardClosure*, oopDesc*, Klass*) (6 samples, 0.10%)</title><rect x="1084.7" y="291.0" width="1.2" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="1087.7" y="302.0"></text>
+</g>
+<g>
+<title>void G1ScanCardClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) (2 samples, 0.03%)</title><rect x="1085.5" y="275.0" width="0.4" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="1088.5" y="286.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1ScanCardClosure&gt;::Table::oop_oop_iterate&lt;InstanceRefKlass, unsigned int&gt;(G1ScanCardClosure*, oopDesc*, Klass*) (93 samples, 1.62%)</title><rect x="1085.9" y="291.0" width="19.1" height="15" fill="#d2d23f" rx="2" ry="2"/>
+<text x="1088.9" y="302.0"></text>
+</g>
+<g>
+<title>G1CardTable::mark_card_deferred(unsigned long) (2 samples, 0.03%)</title><rect x="1090.8" y="275.0" width="0.4" height="15" fill="#cece3e" rx="2" ry="2"/>
+<text x="1093.8" y="286.0"></text>
+</g>
+<g>
+<title>PtrQueue::enqueue_known_active(void*) (2 samples, 0.03%)</title><rect x="1091.2" y="275.0" width="0.4" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="1094.2" y="286.0"></text>
+</g>
+<g>
+<title>void G1ScanCardClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) (65 samples, 1.13%)</title><rect x="1091.6" y="275.0" width="13.4" height="15" fill="#d4d440" rx="2" ry="2"/>
+<text x="1094.6" y="286.0"></text>
+</g>
+<g>
+<title>G1CardTable::mark_card_deferred(unsigned long) (6 samples, 0.10%)</title><rect x="1103.8" y="259.0" width="1.2" height="15" fill="#d1d13f" rx="2" ry="2"/>
+<text x="1106.8" y="270.0"></text>
+</g>
+<g>
+<title>oopDesc::size() (2 samples, 0.03%)</title><rect x="1105.0" y="307.0" width="0.4" height="15" fill="#dcdc42" rx="2" ry="2"/>
+<text x="1108.0" y="318.0"></text>
+</g>
+<g>
+<title>oopDesc::size_given_klass(Klass*) (3 samples, 0.05%)</title><rect x="1105.4" y="307.0" width="0.7" height="15" fill="#dbdb42" rx="2" ry="2"/>
+<text x="1108.4" y="318.0"></text>
+</g>
+<g>
+<title>G1RemSet::refine_card_during_gc(unsigned char*, G1ScanCardClosure*) (4 samples, 0.07%)</title><rect x="1106.1" y="339.0" width="0.8" height="15" fill="#d5d540" rx="2" ry="2"/>
+<text x="1109.1" y="350.0"></text>
+</g>
+<g>
+<title>G1RootProcessor::evacuate_roots(G1ParScanThreadState*, unsigned int) (11 samples, 0.19%)</title><rect x="1107.1" y="387.0" width="2.2" height="15" fill="#d0d03e" rx="2" ry="2"/>
+<text x="1110.1" y="398.0"></text>
+</g>
+<g>
+<title>G1RootProcessor::process_java_roots(G1RootClosures*, G1GCPhaseTimes*, unsigned int) (2 samples, 0.03%)</title><rect x="1107.1" y="371.0" width="0.4" height="15" fill="#dddd43" rx="2" ry="2"/>
+<text x="1110.1" y="382.0"></text>
+</g>
+<g>
+<title>G1RootProcessor::process_vm_roots(G1RootClosures*, G1GCPhaseTimes*, unsigned int) (9 samples, 0.16%)</title><rect x="1107.5" y="371.0" width="1.8" height="15" fill="#d1d13f" rx="2" ry="2"/>
+<text x="1110.5" y="382.0"></text>
+</g>
+<g>
+<title>SymbolPropertyTable::oops_do(OopClosure*) (9 samples, 0.16%)</title><rect x="1107.5" y="355.0" width="1.8" height="15" fill="#cece3e" rx="2" ry="2"/>
+<text x="1110.5" y="366.0"></text>
+</g>
+<g>
+<title>G1ParScanThreadState::trim_queue_partially() (9 samples, 0.16%)</title><rect x="1107.5" y="339.0" width="1.8" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="1110.5" y="350.0"></text>
+</g>
+<g>
+<title>G1ParScanThreadState::copy_to_survivor_space(G1HeapRegionAttr, oopDesc*, markOopDesc*) (5 samples, 0.09%)</title><rect x="1108.3" y="323.0" width="1.0" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="1111.3" y="334.0"></text>
+</g>
+<g>
+<title>void OopOopIterateBackwardsDispatch&lt;G1ScanEvacuatedObjClosure&gt;::Table::oop_oop_iterate_backwards&lt;InstanceRefKlass, unsigned int&gt;(G1ScanEvacuatedObjClosure*, oopDesc*, Klass*) (2 samples, 0.03%)</title><rect x="1108.9" y="307.0" width="0.4" height="15" fill="#dcdc42" rx="2" ry="2"/>
+<text x="1111.9" y="318.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::discover_reference(oopDesc*, ReferenceType) (2 samples, 0.03%)</title><rect x="1108.9" y="291.0" width="0.4" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="1111.9" y="302.0"></text>
+</g>
+<g>
+<title>G1RemSet::scan_rem_set(G1ParScanThreadState*, unsigned int, G1GCPhaseTimes::GCParPhases, G1GCPhaseTimes::GCParPhases, G1GCPhaseTimes::GCParPhases) (33 samples, 0.58%)</title><rect x="1109.3" y="403.0" width="6.8" height="15" fill="#e1e144" rx="2" ry="2"/>
+<text x="1112.3" y="414.0"></text>
+</g>
+<g>
+<title>G1CollectionSet::iterate_incremental_part_from(HeapRegionClosure*, unsigned int, unsigned int) const (33 samples, 0.58%)</title><rect x="1109.3" y="387.0" width="6.8" height="15" fill="#e1e144" rx="2" ry="2"/>
+<text x="1112.3" y="398.0"></text>
+</g>
+<g>
+<title>G1ScanRSForRegionClosure::do_heap_region(HeapRegion*) (33 samples, 0.58%)</title><rect x="1109.3" y="371.0" width="6.8" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="1112.3" y="382.0"></text>
+</g>
+<g>
+<title>G1ScanRSForRegionClosure::scan_rem_set_roots(HeapRegion*) (33 samples, 0.58%)</title><rect x="1109.3" y="355.0" width="6.8" height="15" fill="#d1d13f" rx="2" ry="2"/>
+<text x="1112.3" y="366.0"></text>
+</g>
+<g>
+<title>G1ParScanThreadState::trim_queue_partially() (31 samples, 0.54%)</title><rect x="1109.3" y="339.0" width="6.4" height="15" fill="#dcdc42" rx="2" ry="2"/>
+<text x="1112.3" y="350.0"></text>
+</g>
+<g>
+<title>G1ParScanThreadState::copy_to_survivor_space(G1HeapRegionAttr, oopDesc*, markOopDesc*) (14 samples, 0.24%)</title><rect x="1112.6" y="323.0" width="2.9" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="1115.6" y="334.0"></text>
+</g>
+<g>
+<title>void OopOopIterateBackwardsDispatch&lt;G1ScanEvacuatedObjClosure&gt;::Table::oop_oop_iterate_backwards&lt;InstanceRefKlass, unsigned int&gt;(G1ScanEvacuatedObjClosure*, oopDesc*, Klass*) (7 samples, 0.12%)</title><rect x="1114.1" y="307.0" width="1.4" height="15" fill="#e1e144" rx="2" ry="2"/>
+<text x="1117.1" y="318.0"></text>
+</g>
+<g>
+<title>bool HeapRegion::oops_on_card_seq_iterate_careful&lt;true, G1ScanCardClosure&gt;(MemRegion, G1ScanCardClosure*) (2 samples, 0.03%)</title><rect x="1115.7" y="339.0" width="0.4" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="1118.7" y="350.0"></text>
+</g>
+<g>
+<title>G1BlockOffsetTablePart::forward_to_block_containing_addr_slow(HeapWordImpl**, HeapWordImpl**, void const*) (2 samples, 0.03%)</title><rect x="1115.7" y="323.0" width="0.4" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="1118.7" y="334.0"></text>
+</g>
+<g>
+<title>G1RebuildRemSetTask::work(unsigned int) (116 samples, 2.02%)</title><rect x="1116.1" y="419.0" width="23.9" height="15" fill="#caca3c" rx="2" ry="2"/>
+<text x="1119.1" y="430.0">G..</text>
+</g>
+<g>
+<title>HeapRegionManager::par_iterate(HeapRegionClosure*, HeapRegionClaimer*, unsigned int) const (116 samples, 2.02%)</title><rect x="1116.1" y="403.0" width="23.9" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="1119.1" y="414.0">H..</text>
+</g>
+<g>
+<title>G1RebuildRemSetTask::G1RebuildRemSetHeapRegionClosure::do_heap_region(HeapRegion*) (111 samples, 1.94%)</title><rect x="1116.1" y="387.0" width="22.9" height="15" fill="#e2e244" rx="2" ry="2"/>
+<text x="1119.1" y="398.0">G..</text>
+</g>
+<g>
+<title>G1BlockOffsetTablePart::forward_to_block_containing_addr_slow(HeapWordImpl**, HeapWordImpl**, void const*) (7 samples, 0.12%)</title><rect x="1121.3" y="371.0" width="1.4" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="1124.3" y="382.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_is_obj(HeapWordImpl* const*) const (2 samples, 0.03%)</title><rect x="1121.9" y="355.0" width="0.4" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="1124.9" y="366.0"></text>
+</g>
+<g>
+<title>HeapRegion::block_size(HeapWordImpl* const*) const (2 samples, 0.03%)</title><rect x="1122.3" y="355.0" width="0.4" height="15" fill="#e0e044" rx="2" ry="2"/>
+<text x="1125.3" y="366.0"></text>
+</g>
+<g>
+<title>MarkBitMap::get_next_marked_addr(HeapWordImpl* const*, HeapWordImpl* const*) const (11 samples, 0.19%)</title><rect x="1122.9" y="371.0" width="2.3" height="15" fill="#e4e445" rx="2" ry="2"/>
+<text x="1125.9" y="382.0"></text>
+</g>
+<g>
+<title>void G1RebuildRemSetClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) [clone .isra.231] (5 samples, 0.09%)</title><rect x="1125.2" y="371.0" width="1.0" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="1128.2" y="382.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1RebuildRemSetClosure&gt;::Table::oop_oop_iterate&lt;InstanceKlass, unsigned int&gt;(G1RebuildRemSetClosure*, oopDesc*, Klass*) (7 samples, 0.12%)</title><rect x="1126.2" y="371.0" width="1.5" height="15" fill="#d2d23f" rx="2" ry="2"/>
+<text x="1129.2" y="382.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1RebuildRemSetClosure&gt;::Table::oop_oop_iterate&lt;InstanceRefKlass, unsigned int&gt;(G1RebuildRemSetClosure*, oopDesc*, Klass*) (55 samples, 0.96%)</title><rect x="1127.7" y="371.0" width="11.3" height="15" fill="#d2d23f" rx="2" ry="2"/>
+<text x="1130.7" y="382.0"></text>
+</g>
+<g>
+<title>HeapRegionRemSet::add_reference(void*, unsigned int) [clone .part.52] (14 samples, 0.24%)</title><rect x="1130.3" y="355.0" width="2.9" height="15" fill="#c9c93c" rx="2" ry="2"/>
+<text x="1133.3" y="366.0"></text>
+</g>
+<g>
+<title>OtherRegionsTable::add_reference(void*, unsigned int) (7 samples, 0.12%)</title><rect x="1133.2" y="355.0" width="1.5" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="1136.2" y="366.0"></text>
+</g>
+<g>
+<title>void G1RebuildRemSetClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) [clone .isra.231] (21 samples, 0.37%)</title><rect x="1134.7" y="355.0" width="4.3" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="1137.7" y="366.0"></text>
+</g>
+<g>
+<title>void G1RebuildRemSetClosure::do_oop_work&lt;unsigned int&gt;(unsigned int*) [clone .isra.231] (2 samples, 0.03%)</title><rect x="1139.0" y="387.0" width="0.4" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="1142.0" y="398.0"></text>
+</g>
+<g>
+<title>void OopOopIterateDispatch&lt;G1RebuildRemSetClosure&gt;::Table::oop_oop_iterate&lt;InstanceRefKlass, unsigned int&gt;(G1RebuildRemSetClosure*, oopDesc*, Klass*) (3 samples, 0.05%)</title><rect x="1139.4" y="387.0" width="0.6" height="15" fill="#d0d03e" rx="2" ry="2"/>
+<text x="1142.4" y="398.0"></text>
+</g>
+<g>
+<title>G1STWRefProcTaskProxy::work(unsigned int) (230 samples, 4.01%)</title><rect x="1140.2" y="419.0" width="47.3" height="15" fill="#dddd43" rx="2" ry="2"/>
+<text x="1143.2" y="430.0">G1ST..</text>
+</g>
+<g>
+<title>RefProcPhase4Task::work(unsigned int, BoolObjectClosure&amp;, OopClosure&amp;, VoidClosure&amp;) (230 samples, 4.01%)</title><rect x="1140.2" y="403.0" width="47.3" height="15" fill="#e0e044" rx="2" ry="2"/>
+<text x="1143.2" y="414.0">RefP..</text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;573558ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)3, 573558ul&gt;::oop_access_barrier(oopDesc*, long) (7 samples, 0.12%)</title><rect x="1140.4" y="387.0" width="1.5" height="15" fill="#d7d741" rx="2" ry="2"/>
+<text x="1143.4" y="398.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::process_phantom_refs_work(DiscoveredList&amp;, BoolObjectClosure*, OopClosure*, VoidClosure*) (222 samples, 3.87%)</title><rect x="1141.9" y="387.0" width="45.6" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="1144.9" y="398.0">Refe..</text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;565366ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)1, 565366ul&gt;::oop_access_barrier(oopDesc*, long, oopDesc*) (3 samples, 0.05%)</title><rect x="1143.3" y="371.0" width="0.6" height="15" fill="#caca3c" rx="2" ry="2"/>
+<text x="1146.3" y="382.0"></text>
+</g>
+<g>
+<title>G1ParEvacuateFollowersClosure::do_void() (20 samples, 0.35%)</title><rect x="1144.1" y="371.0" width="4.1" height="15" fill="#cdcd3d" rx="2" ry="2"/>
+<text x="1147.1" y="382.0"></text>
+</g>
+<g>
+<title>OWSTTaskTerminator::offer_termination(TerminatorTerminator*) (20 samples, 0.35%)</title><rect x="1144.1" y="355.0" width="4.1" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="1147.1" y="366.0"></text>
+</g>
+<g>
+<title>OWSTTaskTerminator::do_spin_master_work(TerminatorTerminator*) (2 samples, 0.03%)</title><rect x="1144.1" y="339.0" width="0.4" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="1147.1" y="350.0"></text>
+</g>
+<g>
+<title>SpinPause (18 samples, 0.31%)</title><rect x="1144.5" y="339.0" width="3.7" height="15" fill="#e25b5b" rx="2" ry="2"/>
+<text x="1147.5" y="350.0"></text>
+</g>
+<g>
+<title>G1STWIsAliveClosure::do_object_b(oopDesc*) (191 samples, 3.33%)</title><rect x="1148.2" y="371.0" width="39.3" height="15" fill="#caca3c" rx="2" ry="2"/>
+<text x="1151.2" y="382.0">G1S..</text>
+</g>
+<g>
+<title>VMThread::run() (12 samples, 0.21%)</title><rect x="1187.5" y="435.0" width="2.5" height="15" fill="#cfcf3e" rx="2" ry="2"/>
+<text x="1190.5" y="446.0"></text>
+</g>
+<g>
+<title>VMThread::loop() (12 samples, 0.21%)</title><rect x="1187.5" y="419.0" width="2.5" height="15" fill="#dddd43" rx="2" ry="2"/>
+<text x="1190.5" y="430.0"></text>
+</g>
+<g>
+<title>VMThread::evaluate_operation(VM_Operation*) [clone .constprop.63] (12 samples, 0.21%)</title><rect x="1187.5" y="403.0" width="2.5" height="15" fill="#dada42" rx="2" ry="2"/>
+<text x="1190.5" y="414.0"></text>
+</g>
+<g>
+<title>VM_Operation::evaluate() (12 samples, 0.21%)</title><rect x="1187.5" y="387.0" width="2.5" height="15" fill="#caca3c" rx="2" ry="2"/>
+<text x="1190.5" y="398.0"></text>
+</g>
+<g>
+<title>VM_G1CollectForAllocation::doit() (7 samples, 0.12%)</title><rect x="1187.5" y="371.0" width="1.5" height="15" fill="#e4e445" rx="2" ry="2"/>
+<text x="1190.5" y="382.0"></text>
+</g>
+<g>
+<title>G1CollectedHeap::do_collection_pause_at_safepoint(double) (7 samples, 0.12%)</title><rect x="1187.5" y="355.0" width="1.5" height="15" fill="#e2e244" rx="2" ry="2"/>
+<text x="1190.5" y="366.0"></text>
+</g>
+<g>
+<title>G1CollectedHeap::post_evacuate_collection_set(G1EvacuationInfo&amp;, G1ParScanThreadStateSet*) (3 samples, 0.05%)</title><rect x="1187.7" y="339.0" width="0.7" height="15" fill="#cccc3d" rx="2" ry="2"/>
+<text x="1190.7" y="350.0"></text>
+</g>
+<g>
+<title>G1CollectedHeap::process_discovered_references(G1ParScanThreadStateSet*) (3 samples, 0.05%)</title><rect x="1187.7" y="323.0" width="0.7" height="15" fill="#d6d640" rx="2" ry="2"/>
+<text x="1190.7" y="334.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::process_discovered_references(BoolObjectClosure*, OopClosure*, VoidClosure*, AbstractRefProcTaskExecutor*, ReferenceProcessorPhaseTimes*) (3 samples, 0.05%)</title><rect x="1187.7" y="307.0" width="0.7" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="1190.7" y="318.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::process_phantom_refs(BoolObjectClosure*, OopClosure*, VoidClosure*, AbstractRefProcTaskExecutor*, ReferenceProcessorPhaseTimes*) (3 samples, 0.05%)</title><rect x="1187.7" y="291.0" width="0.7" height="15" fill="#dfdf43" rx="2" ry="2"/>
+<text x="1190.7" y="302.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;573558ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)3, 573558ul&gt;::oop_access_barrier(oopDesc*, long) (2 samples, 0.03%)</title><rect x="1187.7" y="275.0" width="0.4" height="15" fill="#c8c83c" rx="2" ry="2"/>
+<text x="1190.7" y="286.0"></text>
+</g>
+<g>
+<title>VM_G1Concurrent::doit() (5 samples, 0.09%)</title><rect x="1189.0" y="371.0" width="1.0" height="15" fill="#d9d941" rx="2" ry="2"/>
+<text x="1192.0" y="382.0"></text>
+</g>
+<g>
+<title>G1ConcurrentMark::remark() (5 samples, 0.09%)</title><rect x="1189.0" y="355.0" width="1.0" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="1192.0" y="366.0"></text>
+</g>
+<g>
+<title>G1ConcurrentMark::weak_refs_work(bool) (5 samples, 0.09%)</title><rect x="1189.0" y="339.0" width="1.0" height="15" fill="#dede43" rx="2" ry="2"/>
+<text x="1192.0" y="350.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::process_discovered_references(BoolObjectClosure*, OopClosure*, VoidClosure*, AbstractRefProcTaskExecutor*, ReferenceProcessorPhaseTimes*) (5 samples, 0.09%)</title><rect x="1189.0" y="323.0" width="1.0" height="15" fill="#e3e345" rx="2" ry="2"/>
+<text x="1192.0" y="334.0"></text>
+</g>
+<g>
+<title>ReferenceProcessor::process_phantom_refs(BoolObjectClosure*, OopClosure*, VoidClosure*, AbstractRefProcTaskExecutor*, ReferenceProcessorPhaseTimes*) (5 samples, 0.09%)</title><rect x="1189.0" y="307.0" width="1.0" height="15" fill="#caca3c" rx="2" ry="2"/>
+<text x="1192.0" y="318.0"></text>
+</g>
+<g>
+<title>AccessInternal::PostRuntimeDispatch&lt;G1BarrierSet::AccessBarrier&lt;573558ul, G1BarrierSet&gt;, (AccessInternal::BarrierType)3, 573558ul&gt;::oop_access_barrier(oopDesc*, long) (5 samples, 0.09%)</title><rect x="1189.0" y="291.0" width="1.0" height="15" fill="#dfdf43" rx="2" ry="2"/>
+<text x="1192.0" y="302.0"></text>
+</g>
+</g>
+</svg>

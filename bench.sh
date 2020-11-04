@@ -9,16 +9,20 @@ main() {
   mvn install >/dev/null
   usejdk 13
 
-  local clz
   local args=()
   for arg; do
     case "${arg}" in
       alloc1)
-        clz=me.serce.AllocateBuffer1
+        args+=( me.serce.AllocateBuffer1 )
         ;;
       alloc2)
-        clz=me.serce.AllocateBuffer2
-        args+=( -prof perfasm )
+        args+=( -wi 1 -r 120 -p size=128 me.serce.AllocateBuffer1.direct )
+        ;;
+      alloc3)
+        args+=( -wi 1 -r 120 -p size=128 me.serce.AllocateBuffer1.heap )
+        ;;
+      alloc4)
+        args+=( me.serce.AllocateBuffer2 )
         ;;
       *)
         error "unknown benchmark ${arg}"
@@ -26,8 +30,8 @@ main() {
     esac
   done
 
-  info "starting ${clz}"
-  java -jar target/benchmarks.jar "${clz}" "${args[@]}"
+  info "starting ${args[@]}"
+  java -jar target/benchmarks.jar "${args[@]}"
   popd > /dev/null
 }
 

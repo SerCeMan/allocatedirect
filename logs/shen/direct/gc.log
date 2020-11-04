@@ -12,7 +12,7 @@
 [2020-10-31T11:11:21.735+0000][info][gc,ergo] Pacer for Idle. Initial: 81M, Alloc Tax Rate: 1.0x
 [2020-10-31T11:11:21.735+0000][info][gc,init] Initialize Shenandoah heap: 4096M initial, 4096M min, 4096M max
 [2020-10-31T11:11:21.735+0000][info][gc,init] Safepointing mechanism: thread-local poll
-[2020-10-31T11:11:21.735+0000][info][gc     ] Using Shenandoah
+[2020-10-31T11:11:21.735+0000][info][gc     ] Utlabsing Shenandoah
 [2020-10-31T11:11:21.735+0000][info][gc,heap,coops] Heap address: 0x0000000700000000, size: 4096 MB, Compressed Oops mode: Zero based, Oop shift amount: 3
 [2020-10-31T11:11:21.783+0000][info][safepoint    ] Safepoint "Deoptimize", Time since last: 41482205 ns, Reaching safepoint: 37483 ns, At safepoint: 12418 ns, Total: 49901 ns
 [2020-10-31T11:11:22.005+0000][info][safepoint    ] Safepoint "Deoptimize", Time since last: 221350373 ns, Reaching safepoint: 81026 ns, At safepoint: 39157 ns, Total: 120183 ns
