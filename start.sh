@@ -12,6 +12,8 @@ main() {
   local gc_opts
   local gc=g1
   local args=()
+  local jvm_opts=()
+  local clz=me.serce.allocatedirect.Main
   for arg; do
     case "${arg}" in
       g1)
@@ -21,6 +23,15 @@ main() {
       shen)
         gc=shenandoah
         gc_opts=( -XX:+UnlockExperimentalVMOptions -XX:+UseShenandoahGC )
+        ;;
+      heapchaser)
+        clz=me.serce.allocatedirect.HeapMemoryChaser
+        ;;
+      directchaser)
+        clz=me.serce.allocatedirect.DirectMemoryChaser
+        ;;
+      maxmem)
+        jvm_opts+=( -XX:MaxDirectMemorySize=1G )
         ;;
       *)
         args+=( "${arg}" )
@@ -46,7 +57,7 @@ main() {
     -Dcom.sun.management.jmxremote.port=1100 \
     -Dcom.sun.management.jmxremote.authenticate=false \
     -Dcom.sun.management.jmxremote.ssl=false \
-    me.serce.allocatedirect.Main "${args[@]}"
+    "${jvm_opts[@]}" "${clz}" "${args[@]}"
   popd > /dev/null
 }
 

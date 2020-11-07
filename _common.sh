@@ -11,16 +11,16 @@ error() {
 
 usejdk() {
     local version=$1
-    if [[ $version == "8" ]]; then
-        version=1.8
-    fi
     local jdk
     case $(uname) in
       Darwin)
+        if [[ $version == "8" ]]; then
+            version=1.8
+        fi
         jdk=$(/usr/libexec/java_home -v $version)
         ;;
       Linux)
-        jdk=/usr/lib/jvm/zulu-13-amd64/
+        jdk=/usr/lib/jvm/zulu-${version}-amd64/
         if [[ ! -d "${jdk}" ]]; then
           cat <<EOF
 # JDK ${version} is not installed, you can install one from Azul by typing:
@@ -31,6 +31,7 @@ TEE
 sudo apt-get update
 sudo apt-get -y install zulu-${version}
 EOF
+        error "need to update JDK"
         fi
         ;;
       *)

@@ -6,8 +6,8 @@ source "${REPO_DIR}/_common.sh"
 
 main() {
   pushd "${REPO_DIR}"/bench >/dev/null
-  mvn install >/dev/null
   usejdk 13
+  mvn install >/dev/null
 
   local args=()
   for arg; do
@@ -24,8 +24,14 @@ main() {
       alloc4)
         args+=( me.serce.AllocateBuffer2 )
         ;;
+      copy)
+        args+=( me.serce.CopyFileBenchmark.copyFiles )
+        ;;
+      reverse)
+        args+=( me.serce.CopyFileBenchmark.reverseBytesInFiles )
+        ;;
       *)
-        error "unknown benchmark ${arg}"
+        args+=( "${arg}" )
         ;;
     esac
   done
