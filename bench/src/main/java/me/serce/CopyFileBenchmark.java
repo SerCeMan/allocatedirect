@@ -75,18 +75,19 @@ public class CopyFileBenchmark {
 
   @Benchmark
   public void reverseBytesInFiles() throws Exception {
-    buffer.clear();
+    ByteBuffer localBuf = this.buffer;
+    localBuf.clear();
     try (FileChannel channel1 = FileChannel.open(Paths.get(DIR + "file1"), READ);
          FileChannel channel2 = FileChannel.open(Paths.get(DIR + "file2"), WRITE)) {
-      while (buffer.hasRemaining()) {
-        channel1.read(buffer);
+      while (localBuf.hasRemaining()) {
+        channel1.read(localBuf);
       }
-      for (int i = 0; i < SIZE / 8; i++) {
-        buffer.putLong(i, Long.reverse(buffer.getLong(i)));
+      for (int i = 0; i < SIZE; i += 8) {
+        localBuf.putLong(i, Long.reverse(localBuf.getLong(i)));
       }
-      buffer.flip();
-      while (buffer.hasRemaining()) {
-        channel2.write(buffer);
+      localBuf.flip();
+      while (localBuf.hasRemaining()) {
+        channel2.write(localBuf);
       }
     }
   }

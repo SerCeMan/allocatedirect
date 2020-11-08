@@ -1,0 +1,20 @@
+loop:
+ mov    r10d,DWORD PTR [rdx+0x14]
+ mov    ecx,DWORD PTR [r10+0x8]
+ mov    r8,r10                  ; <- buffer
+ cmp    ecx,0x16577b
+ jne    0x00007f9d5c277070
+ mov    ebx,DWORD PTR [r8+0x1c] ; <- limit
+ cmp    r11d,ebx
+ jge    0x00007f9d5c277078  ; checkIndex(i)
+ mov    r10,QWORD PTR [r8+0x10]
+ movsxd r8,r11d
+ shl    r8,0x3
+ add    r8,r10
+ mov    r10,r8
+ mov    r10,QWORD PTR [r10] ; r10 = get(i)
+ bswap  r10                 ; reverseBytes(r10)
+ add    rax,r10             ; rax += r10
+ inc    r11d                ; i+=1
+ cmp    r11d,0x8000000
+ jl     loop

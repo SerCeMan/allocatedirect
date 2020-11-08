@@ -27,8 +27,14 @@ main() {
       copy)
         args+=( me.serce.CopyFileBenchmark.copyFiles )
         ;;
+      access)
+        args+=( me.serce.BufferAccessBenchmark.putLong )
+        ;;
       reverse)
         args+=( me.serce.CopyFileBenchmark.reverseBytesInFiles )
+        ;;
+      order)
+        args+=( me.serce.OrderBenchmark.sumBytes )
         ;;
       *)
         args+=( "${arg}" )

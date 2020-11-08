@@ -1,0 +1,37 @@
+loop:
+  mov    r10d,DWORD PTR [rdx+0x14]
+  mov    ecx,DWORD PTR [r10+0x8]      ; implicit exception: dispatches to 0x00007f9d5c277080
+  mov    r8,r10                       ;*getfield buffer {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - me.serce.OrderBenchmark::sumBytes@12 (line 68)
+  cmp    ecx,0x16577b                 ;   {metadata('java/nio/DirectLongBufferS')}
+  jne    0x00007f9d5c277070           ;*invokevirtual get {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  mov    ebx,DWORD PTR [r8+0x1c]      ;*getfield limit {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - java.nio.Buffer::checkIndex@6 (line 719)
+                                      ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                      ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  cmp    r11d,ebx
+  jge    0x00007f9d5c277078           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                      ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                      ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  mov    r10,QWORD PTR [r8+0x10]
+  movsxd r8,r11d
+  shl    r8,0x3
+  add    r8,r10
+  mov    r10,r8
+  mov    r10,QWORD PTR [r10]          ;*invokevirtual getLong {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - jdk.internal.misc.Unsafe::getLong@3 (line 376)
+                                      ; - java.nio.DirectLongBufferS::get@12 (line 273)
+                                      ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  bswap  r10                          ;*invokestatic reverseBytes {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - java.nio.Bits::swap@1 (line 60)
+                                      ; - java.nio.DirectLongBufferS::get@15 (line 273)
+                                      ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  add    rax,r10                      ;*ladd {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - me.serce.OrderBenchmark::sumBytes@19 (line 68)
+  inc    r11d                         ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - me.serce.OrderBenchmark::sumBytes@21 (line 67)
+  cmp    r11d,0x8000000
+  jl     loop                         ;*if_icmpge {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - me.serce.OrderBenchmark::sumBytes@7 (line 67)

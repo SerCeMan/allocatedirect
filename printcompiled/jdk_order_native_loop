@@ -1,0 +1,27 @@
+loop:
+  mov    r11d,DWORD PTR [r8+0x14]     ;*getfield buffer {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - me.serce.OrderBenchmark::sumBytes@12 (line 68)
+  mov    r9d,DWORD PTR [r11+0x1c]     ; implicit exception: dispatches to 0x00007f268c274f5f
+                                      ;*getfield limit {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - java.nio.Buffer::checkIndex@6 (line 719)
+                                      ; - java.nio.DirectLongBufferU::get@6 (line 273)
+                                      ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  cmp    ecx,r9d
+  jge    0x00007f268c274f57           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                      ; - java.nio.DirectLongBufferU::get@6 (line 273)
+                                      ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  mov    r10,QWORD PTR [r11+0x10]
+  movsxd r11,ecx
+  shl    r11,0x3
+  add    r11,r10
+  mov    r10,r11
+  add    rbx,QWORD PTR [r10]          ;*invokevirtual getLong {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - jdk.internal.misc.Unsafe::getLong@3 (line 376)
+                                      ; - java.nio.DirectLongBufferU::get@12 (line 273)
+                                      ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  inc    ecx                          ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - me.serce.OrderBenchmark::sumBytes@21 (line 67)
+  cmp    ecx,0x8000000
+  jl     loop                         ;*if_icmpge {reexecute=0 rethrow=0 return_oop=0}
+                                      ; - me.serce.OrderBenchmark::sumBytes@7 (line 67)

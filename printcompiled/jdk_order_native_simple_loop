@@ -1,0 +1,14 @@
+loop:
+ mov    r11d,DWORD PTR [r8+0x14] ; <- buffer
+ mov    r9d,DWORD PTR [r11+0x1c] ; <- limit
+ cmp    ecx,r9d
+ jge    0x00007f268c274f57 ; checkIndex(i)
+ mov    r10,QWORD PTR [r11+0x10]
+ movsxd r11,ecx
+ shl    r11,0x3
+ add    r11,r10
+ mov    r10,r11
+ add    rbx,QWORD PTR [r10] ; r10+=get(i)
+ inc    ecx                 ; i+=1
+ cmp    ecx,0x8000000
+ jl     loop

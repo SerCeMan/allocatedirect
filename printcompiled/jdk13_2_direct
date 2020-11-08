@@ -1,0 +1,377 @@
+============================= C2-compiled nmethod ==============================
+----------------------------------- Assembly -----------------------------------
+
+Compiled method (c2)     378  507       4       me.serce.BufferAccessBenchmark::putLong (37 bytes)
+ total in heap  [0x00007f0160274a10,0x00007f01602753d0] = 2496
+ relocation     [0x00007f0160274b70,0x00007f0160274b88] = 24
+ main code      [0x00007f0160274ba0,0x00007f0160274e20] = 640
+ stub code      [0x00007f0160274e20,0x00007f0160274e38] = 24
+ oops           [0x00007f0160274e38,0x00007f0160274e48] = 16
+ metadata       [0x00007f0160274e48,0x00007f0160274e88] = 64
+ scopes data    [0x00007f0160274e88,0x00007f0160274ff8] = 368
+ scopes pcs     [0x00007f0160274ff8,0x00007f01602753b8] = 960
+ dependencies   [0x00007f01602753b8,0x00007f01602753c0] = 8
+ nul chk table  [0x00007f01602753c0,0x00007f01602753d0] = 16
+
+--------------------------------------------------------------------------------
+[Constant Pool (empty)]
+
+--------------------------------------------------------------------------------
+
+[Entry Point]
+  # {method} {0x00007f0174633c98} 'putLong' '(Lorg/openjdk/jmh/infra/Blackhole;)V' in 'me/serce/BufferAccessBenchmark'
+  # this:     rsi:rsi   = 'me/serce/BufferAccessBenchmark'
+  # parm0:    rdx:rdx   = 'org/openjdk/jmh/infra/Blackhole'
+  #           [sp+0x60]  (sp of caller)
+  0x00007f0160274ba0:   mov    r10d,DWORD PTR [rsi+0x8]
+  0x00007f0160274ba4:   shl    r10,0x3
+  0x00007f0160274ba8:   movabs r12,0x800000000
+  0x00007f0160274bb2:   add    r10,r12
+  0x00007f0160274bb5:   xor    r12,r12
+  0x00007f0160274bb8:   cmp    rax,r10
+  0x00007f0160274bbb:   jne    0x00007f01587cd580           ;   {runtime_call ic_miss_stub}
+  0x00007f0160274bc1:   data16 xchg ax,ax
+  0x00007f0160274bc4:   nop    DWORD PTR [rax+rax*1+0x0]
+  0x00007f0160274bcc:   data16 data16 xchg ax,ax
+[Verified Entry Point]
+  0x00007f0160274bd0:   mov    DWORD PTR [rsp-0x14000],eax
+  0x00007f0160274bd7:   push   rbp
+  0x00007f0160274bd8:   sub    rsp,0x50                     ;*synchronization entry
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@-1 (line 64)
+  0x00007f0160274bdc:   mov    rcx,QWORD PTR [rsi+0x10]     ;*getfield val {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@1 (line 64)
+  0x00007f0160274be0:   mov    ebp,DWORD PTR [rsi+0x18]     ;*getfield buffer {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@6 (line 65)
+  0x00007f0160274be3:   mov    r10d,DWORD PTR [rbp+0x8]     ; implicit exception: dispatches to 0x00007f0160274dec
+  0x00007f0160274be7:   cmp    r10d,0x2b613                 ;   {metadata('java/nio/DirectByteBuffer')}
+  0x00007f0160274bee:   jne    0x00007f0160274dec
+  0x00007f0160274bf4:   mov    rdi,rbp                      ;*invokevirtual putLong {reexecute=0
+
+  hrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274bf7:   mov    r10d,DWORD PTR [rdi+0x1c]    ;*getfield limit {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@6 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274bfb:   xor    ebx,ebx
+  0x00007f0160274bfd:   cmp    r10d,0x8
+  0x00007f0160274c01:   jl     0x00007f0160274d90           ;*if_icmple {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@11 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c07:   mov    rdx,QWORD PTR [rdi+0x10]     ;*getfield address {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@1 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c0b:   movzx  r10d,BYTE PTR [rdi+0x29]     ;*getfield bigEndian {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::putLong@11 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c10:   test   r10d,r10d
+  0x00007f0160274c13:   je     0x00007f0160274dfc           ;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c19:   mov    rsi,rcx
+  0x00007f0160274c1c:   bswap  rsi                          ;*invokestatic reverseBytes {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::convEndian@12 (line 3698)
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@7 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c1f:   mov    r10,rdx
+  0x00007f0160274c22:   mov    QWORD PTR [r10],rsi          ;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c25:   mov    r11d,0x1
+  0x00007f0160274c2b:   mov    r9d,0xfa0
+  0x00007f0160274c31:   mov    r8d,0x3ffffd
+  0x00007f0160274c37:   sub    r8d,r11d
+  0x00007f0160274c3a:   cmp    r8d,r9d
+  0x00007f0160274c3d:   cmovg  r8d,r9d
+  0x00007f0160274c41:   add    r8d,r11d                     ;*aload {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@21 (line 67)
+  0x00007f0160274c44:   mov    r10d,DWORD PTR [rdi+0x1c]
+  0x00007f0160274c48:   sub    r10d,r11d                    ;*isub {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@10 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c4b:   cmp    r10d,0x8
+  0x00007f0160274c4f:   jl     0x00007f0160274d8d           ;*if_icmple {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@11 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c55:   mov    rdx,QWORD PTR [rdi+0x10]     ;*getfield address {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@1 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c59:   movzx  r10d,BYTE PTR [rdi+0x29]     ;*getfield bigEndian {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::putLong@11 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c5e:   movsxd rax,r11d                     ;*i2l {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@5 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c61:   test   r10d,r10d
+  0x00007f0160274c64:   je     0x00007f0160274dbd           ;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c6a:   mov    ebx,r11d
+  0x00007f0160274c6d:   inc    ebx                          ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 66)
+  0x00007f0160274c6f:   mov    r10,rdx
+  0x00007f0160274c72:   mov    QWORD PTR [r10+rax*1],rsi    ;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c76:   mov    r10d,DWORD PTR [rdi+0x1c]
+  0x00007f0160274c7a:   sub    r10d,r11d
+  0x00007f0160274c7d:   dec    r10d                         ;*isub {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@10 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c80:   cmp    r10d,0x8
+  0x00007f0160274c84:   jl     0x00007f0160274d90           ;*if_icmple {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@11 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c8a:   mov    rdx,QWORD PTR [rdi+0x10]     ;*getfield address {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@1 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c8e:   movzx  r10d,BYTE PTR [rdi+0x29]     ;*getfield bigEndian {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::putLong@11 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c93:   test   r10d,r10d
+  0x00007f0160274c96:   je     0x00007f0160274db4           ;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274c9c:   mov    ebx,r11d
+  0x00007f0160274c9f:   add    ebx,0x2                      ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 66)
+  0x00007f0160274ca2:   mov    r10,rdx
+  0x00007f0160274ca5:   mov    QWORD PTR [r10+rax*1+0x1],rsi;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274caa:   mov    r10d,DWORD PTR [rdi+0x1c]
+  0x00007f0160274cae:   sub    r10d,r11d
+  0x00007f0160274cb1:   add    r10d,0xfffffffe              ;*isub {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@10 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274cb5:   cmp    r10d,0x8
+  0x00007f0160274cb9:   jl     0x00007f0160274d90           ;*if_icmple {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@11 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274cbf:   mov    rdx,QWORD PTR [rdi+0x10]     ;*getfield address {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@1 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274cc3:   movzx  r10d,BYTE PTR [rdi+0x29]     ;*getfield bigEndian {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::putLong@11 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274cc8:   mov    rbp,rax
+  0x00007f0160274ccb:   add    rbp,0x2                      ;*i2l {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@5 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274ccf:   test   r10d,r10d
+  0x00007f0160274cd2:   je     0x00007f0160274dc3           ;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274cd8:   mov    ebx,r11d
+  0x00007f0160274cdb:   add    ebx,0x3                      ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 66)
+  0x00007f0160274cde:   mov    r10,rdx
+  0x00007f0160274ce1:   mov    QWORD PTR [r10+rax*1+0x2],rsi;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274ce6:   mov    r10d,DWORD PTR [rdi+0x1c]
+  0x00007f0160274cea:   sub    r10d,r11d
+  0x00007f0160274ced:   add    r10d,0xfffffffd              ;*isub {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@10 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274cf1:   cmp    r10d,0x8
+  0x00007f0160274cf5:   jl     0x00007f0160274d90           ;*if_icmple {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@11 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274cfb:   mov    rdx,QWORD PTR [rdi+0x10]     ;*getfield address {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@1 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274cff:   movzx  r10d,BYTE PTR [rdi+0x29]     ;*getfield bigEndian {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::putLong@11 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274d04:   test   r10d,r10d
+  0x00007f0160274d07:   je     0x00007f0160274db7
+  0x00007f0160274d0d:   mov    r10,rdx
+  0x00007f0160274d10:   mov    QWORD PTR [r10+rax*1+0x3],rsi;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274d15:   add    r11d,0x4                     ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 66)
+  0x00007f0160274d19:   cmp    r11d,r8d
+  0x00007f0160274d1c:   jl     0x00007f0160274c44           ;*goto {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@33 (line 66)
+  0x00007f0160274d22:   mov    r8,QWORD PTR [r15+0x108]     ; ImmutableOopMap {rdi=Oop }
+                                                            ;*goto {reexecute=1 rethrow=0 return_oop=0}
+                                                            ; - (reexecute) me.serce.BufferAccessBenchmark::putLong@33 (line 66)
+  0x00007f0160274d29:   test   DWORD PTR [r8],eax           ;*goto {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@33 (line 66)
+                                                            ;   {poll}
+  0x00007f0160274d2c:   cmp    r11d,0x3ffffd
+  0x00007f0160274d33:   jl     0x00007f0160274c31
+  0x00007f0160274d39:   cmp    r11d,0x400000
+  0x00007f0160274d40:   jge    0x00007f0160274d7d
+  0x00007f0160274d42:   xchg   ax,ax                        ;*aload {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@21 (line 67)
+  0x00007f0160274d44:   mov    r10d,DWORD PTR [rdi+0x1c]
+  0x00007f0160274d48:   sub    r10d,r11d                    ;*isub {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@10 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274d4b:   cmp    r10d,0x8
+  0x00007f0160274d4f:   jl     0x00007f0160274e00           ;*if_icmple {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@11 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274d55:   movzx  r10d,BYTE PTR [rdi+0x29]     ;*getfield bigEndian {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::putLong@11 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274d5a:   mov    rdx,QWORD PTR [rdi+0x10]     ;*getfield address {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@1 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274d5e:   movsxd rbp,r11d                     ;*i2l {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@5 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274d61:   test   r10d,r10d
+  0x00007f0160274d64:   je     0x00007f0160274e05
+  0x00007f0160274d6a:   mov    r10,rdx
+  0x00007f0160274d6d:   mov    QWORD PTR [r10+rbp*1],rsi    ;*invokevirtual putLongUnaligned {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@10 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274d71:   inc    r11d                         ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 66)
+  0x00007f0160274d74:   cmp    r11d,0x400000
+  0x00007f0160274d7b:   jl     0x00007f0160274d44           ;*if_icmpge {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@18 (line 66)
+  0x00007f0160274d7d:   add    rsp,0x50
+  0x00007f0160274d81:   pop    rbp
+  0x00007f0160274d82:   mov    r10,QWORD PTR [r15+0x108]
+  0x00007f0160274d89:   test   DWORD PTR [r10],eax          ;   {poll_return}
+  0x00007f0160274d8c:   ret
+  0x00007f0160274d8d:   mov    ebx,r11d
+  0x00007f0160274d90:   mov    esi,0xffffff45
+  0x00007f0160274d95:   mov    QWORD PTR [rsp+0x8],rdi
+  0x00007f0160274d9a:   mov    QWORD PTR [rsp+0x10],rdi
+  0x00007f0160274d9f:   mov    DWORD PTR [rsp+0x4],ebx
+  0x00007f0160274da3:   mov    DWORD PTR [rsp+0x20],r10d
+  0x00007f0160274da8:   mov    QWORD PTR [rsp+0x30],rcx
+  0x00007f0160274dad:   xchg   ax,ax
+  0x00007f0160274daf:   call   0x00007f015878ae80           ; ImmutableOopMap {[8]=Oop [16]=Oop }
+                                                            ;*if_icmple {reexecute=1 rethrow=0 return_oop=0}
+                                                            ; - (reexecute) java.nio.Buffer::checkIndex@11 (line 725)
+                                                            ; - java.nio.DirectByteBuffer::putLong@6 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+                                                            ;   {runtime_call UncommonTrapBlob}
+  0x00007f0160274db4:   mov    rbp,rax
+  0x00007f0160274db7:   add    rbp,0x1                      ;*i2l {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@5 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274dbb:   jmp    0x00007f0160274dc3
+  0x00007f0160274dbd:   mov    rbp,rax
+  0x00007f0160274dc0:   mov    ebx,r11d
+  0x00007f0160274dc3:   add    rdx,rbp                      ;*ladd {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectByteBuffer::ix@8 (line 260)
+                                                            ; - java.nio.DirectByteBuffer::putLong@9 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+  0x00007f0160274dc6:   mov    esi,0xffffff45
+  0x00007f0160274dcb:   mov    DWORD PTR [rsp],ebx
+  0x00007f0160274dce:   mov    QWORD PTR [rsp+0x8],rdi
+  0x00007f0160274dd3:   mov    QWORD PTR [rsp+0x10],rdi
+  0x00007f0160274dd8:   mov    QWORD PTR [rsp+0x18],rdx
+  0x00007f0160274ddd:   mov    DWORD PTR [rsp+0x4],r10d
+  0x00007f0160274de2:   mov    QWORD PTR [rsp+0x28],rcx
+  0x00007f0160274de7:   call   0x00007f015878ae80           ; ImmutableOopMap {[8]=Oop [16]=Oop }
+                                                            ;*if_icmpne {reexecute=1 rethrow=0 return_oop=0}
+                                                            ; - (reexecute) jdk.internal.misc.Unsafe::convEndian@4 (line 3698)
+                                                            ; - jdk.internal.misc.Unsafe::putLongUnaligned@7 (line 3555)
+                                                            ; - java.nio.DirectByteBuffer::putLong@14 (line 942)
+                                                            ; - java.nio.DirectByteBuffer::putLong@13 (line 963)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 67)
+                                                            ;   {runtime_call UncommonTrapBlob}
+  0x00007f0160274dec:   mov    esi,0xffffff76
+  0x00007f0160274df1:   mov    QWORD PTR [rsp],rcx
+  0x00007f0160274df5:   xchg   ax,ax
+  0x00007f0160274df7:   call   0x00007f015878ae80           ; ImmutableOopMap {rbp=NarrowOop }
+                                                            ;*if_icmpge {reexecute=1 rethrow=0 return_oop=0}
+                                                            ; - (reexecute) me.serce.BufferAccessBenchmark::putLong@18 (line 66)
+                                                            ;   {runtime_call UncommonTrapBlob}
+  0x00007f0160274dfc:   xor    ebp,ebp
+  0x00007f0160274dfe:   jmp    0x00007f0160274dc3
+  0x00007f0160274e00:   mov    ebx,r11d
+  0x00007f0160274e03:   jmp    0x00007f0160274d90
+  0x00007f0160274e05:   mov    ebx,r11d
+  0x00007f0160274e08:   jmp    0x00007f0160274dc3
+  0x00007f0160274e0a:   hlt
+  0x00007f0160274e0b:   hlt
+  0x00007f0160274e0c:   hlt
+  0x00007f0160274e0d:   hlt
+  0x00007f0160274e0e:   hlt
+  0x00007f0160274e0f:   hlt
+  0x00007f0160274e10:   hlt
+  0x00007f0160274e11:   hlt
+  0x00007f0160274e12:   hlt
+  0x00007f0160274e13:   hlt
+  0x00007f0160274e14:   hlt
+  0x00007f0160274e15:   hlt
+  0x00007f0160274e16:   hlt
+  0x00007f0160274e17:   hlt
+  0x00007f0160274e18:   hlt
+  0x00007f0160274e19:   hlt
+  0x00007f0160274e1a:   hlt
+  0x00007f0160274e1b:   hlt
+  0x00007f0160274e1c:   hlt
+  0x00007f0160274e1d:   hlt
+  0x00007f0160274e1e:   hlt
+  0x00007f0160274e1f:   hlt
+[Exception Handler]
+  0x00007f0160274e20:   jmp    0x00007f01587eb300           ;   {no_reloc}
+[Deopt Handler Code]
+  0x00007f0160274e25:   call   0x00007f0160274e2a
+  0x00007f0160274e2a:   sub    QWORD PTR [rsp],0x5
+  0x00007f0160274e2f:   jmp    0x00007f01587cac20           ;   {runtime_call DeoptimizationBlob}
+  0x00007f0160274e34:   hlt
+  0x00007f0160274e35:   hlt
+  0x00007f0160274e36:   hlt
+  0x00007f0160274e37:   hlt
+--------------------------------------------------------------------------------

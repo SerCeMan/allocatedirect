@@ -1,0 +1,223 @@
+============================= C2-compiled nmethod ==============================
+----------------------------------- Assembly -----------------------------------
+
+Compiled method (c2)     360  511       4       me.serce.BufferAccessBenchmark::putLong (37 bytes)
+ total in heap  [0x00007fbb68274610,0x00007fbb68274cd0] = 1728
+ relocation     [0x00007fbb68274770,0x00007fbb68274788] = 24
+ main code      [0x00007fbb682747a0,0x00007fbb68274940] = 416
+ stub code      [0x00007fbb68274940,0x00007fbb68274958] = 24
+ oops           [0x00007fbb68274958,0x00007fbb68274968] = 16
+ metadata       [0x00007fbb68274968,0x00007fbb682749a0] = 56
+ scopes data    [0x00007fbb682749a0,0x00007fbb68274a68] = 200
+ scopes pcs     [0x00007fbb68274a68,0x00007fbb68274cb8] = 592
+ dependencies   [0x00007fbb68274cb8,0x00007fbb68274cc0] = 8
+ nul chk table  [0x00007fbb68274cc0,0x00007fbb68274cd0] = 16
+
+--------------------------------------------------------------------------------
+[Constant Pool (empty)]
+
+--------------------------------------------------------------------------------
+
+[Entry Point]
+  # {method} {0x00007fbb5c783ce0} 'putLong' '(Lorg/openjdk/jmh/infra/Blackhole;)V' in 'me/serce/BufferAccessBenchmark'
+  # this:     rsi:rsi   = 'me/serce/BufferAccessBenchmark'
+  # parm0:    rdx:rdx   = 'org/openjdk/jmh/infra/Blackhole'
+  #           [sp+0x50]  (sp of caller)
+  0x00007fbb682747a0:   mov    r10d,DWORD PTR [rsi+0x8]
+  0x00007fbb682747a4:   shl    r10,0x3
+  0x00007fbb682747a8:   movabs r12,0x800000000
+  0x00007fbb682747b2:   add    r10,r12
+  0x00007fbb682747b5:   xor    r12,r12
+  0x00007fbb682747b8:   cmp    rax,r10
+  0x00007fbb682747bb:   jne    0x00007fbb607cd580           ;   {runtime_call ic_miss_stub}
+  0x00007fbb682747c1:   data16 xchg ax,ax
+  0x00007fbb682747c4:   nop    DWORD PTR [rax+rax*1+0x0]
+  0x00007fbb682747cc:   data16 data16 xchg ax,ax
+[Verified Entry Point]
+  0x00007fbb682747d0:   mov    DWORD PTR [rsp-0x14000],eax
+  0x00007fbb682747d7:   push   rbp
+  0x00007fbb682747d8:   sub    rsp,0x40                     ;*synchronization entry
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@-1 (line 65)
+  0x00007fbb682747dc:   mov    rcx,QWORD PTR [rsi+0x10]     ;*getfield val {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@1 (line 65)
+  0x00007fbb682747e0:   mov    ebp,DWORD PTR [rsi+0x18]     ;*getfield buffer {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@6 (line 66)
+  0x00007fbb682747e3:   mov    r10d,DWORD PTR [rbp+0x8]     ; implicit exception: dispatches to 0x00007fbb68274924
+  0x00007fbb682747e7:   cmp    r10d,0x16518b                ;   {metadata('java/nio/DirectLongBufferS')}
+  0x00007fbb682747ee:   jne    0x00007fbb68274924
+  0x00007fbb682747f4:   mov    rbx,rbp                      ;*invokevirtual put {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb682747f7:   mov    r11d,DWORD PTR [rbx+0x1c]
+  0x00007fbb682747fb:   test   r11d,r11d
+  0x00007fbb682747fe:   jle    0x00007fbb68274934           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::put@6 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb68274804:   mov    r10,QWORD PTR [rbx+0x10]     ;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb68274808:   mov    rdi,rcx
+  0x00007fbb6827480b:   bswap  rdi                          ;*invokestatic reverseBytes {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Bits::swap@1 (line 60)
+                                                            ; - java.nio.DirectLongBufferS::put@13 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb6827480e:   mov    QWORD PTR [r10],rdi          ;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb68274811:   mov    r10d,0xfa0
+  0x00007fbb68274817:   mov    r8d,0x1
+  0x00007fbb6827481d:   mov    edx,0x3ffffd
+  0x00007fbb68274822:   sub    edx,r8d
+  0x00007fbb68274825:   cmp    edx,r10d
+  0x00007fbb68274828:   cmovg  edx,r10d
+  0x00007fbb6827482c:   add    edx,r8d
+  0x00007fbb6827482f:   nop                                 ;*aload {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@21 (line 68)
+  0x00007fbb68274830:   mov    r11d,DWORD PTR [rbx+0x1c]
+  0x00007fbb68274834:   cmp    r8d,r11d
+  0x00007fbb68274837:   jge    0x00007fbb68274901           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::put@6 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb6827483d:   mov    r11,QWORD PTR [rbx+0x10]     ;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb68274841:   mov    r9d,r8d
+  0x00007fbb68274844:   inc    r9d                          ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 67)
+  0x00007fbb68274847:   movsxd rax,r8d
+  0x00007fbb6827484a:   shl    rax,0x3                      ;*lshl {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectLongBufferS::ix@7 (line 260)
+                                                            ; - java.nio.DirectLongBufferS::put@9 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb6827484e:   mov    QWORD PTR [r11+rax*1],rdi    ;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb68274852:   mov    r11d,DWORD PTR [rbx+0x1c]
+  0x00007fbb68274856:   cmp    r9d,r11d
+  0x00007fbb68274859:   jge    0x00007fbb68274904           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::put@6 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb6827485f:   mov    r11,QWORD PTR [rbx+0x10]     ;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb68274863:   mov    r9d,r8d
+  0x00007fbb68274866:   add    r9d,0x2                      ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 67)
+  0x00007fbb6827486a:   mov    QWORD PTR [r11+rax*1+0x8],rdi;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb6827486f:   mov    esi,DWORD PTR [rbx+0x1c]
+  0x00007fbb68274872:   cmp    r9d,esi
+  0x00007fbb68274875:   jge    0x00007fbb68274904           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::put@6 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb6827487b:   mov    r11,QWORD PTR [rbx+0x10]     ;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb6827487f:   mov    r9d,r8d
+  0x00007fbb68274882:   add    r9d,0x3                      ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 67)
+  0x00007fbb68274886:   mov    QWORD PTR [r11+rax*1+0x10],rdi;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb6827488b:   mov    r11d,DWORD PTR [rbx+0x1c]
+  0x00007fbb6827488f:   cmp    r9d,r11d
+  0x00007fbb68274892:   jge    0x00007fbb68274904           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::put@6 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb68274894:   mov    r11,QWORD PTR [rbx+0x10]
+  0x00007fbb68274898:   mov    QWORD PTR [r11+rax*1+0x18],rdi;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb6827489d:   add    r8d,0x4                      ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 67)
+  0x00007fbb682748a1:   cmp    r8d,edx
+  0x00007fbb682748a4:   jl     0x00007fbb68274830           ;*goto {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@33 (line 67)
+  0x00007fbb682748a6:   mov    r9,QWORD PTR [r15+0x108]     ; ImmutableOopMap {rbx=Oop }
+                                                            ;*goto {reexecute=1 rethrow=0 return_oop=0}
+                                                            ; - (reexecute) me.serce.BufferAccessBenchmark::putLong@33 (line 67)
+  0x00007fbb682748ad:   test   DWORD PTR [r9],eax           ;*goto {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@33 (line 67)
+                                                            ;   {poll}
+  0x00007fbb682748b0:   cmp    r8d,0x3ffffd
+  0x00007fbb682748b7:   jl     0x00007fbb6827481d
+  0x00007fbb682748bd:   cmp    r8d,0x400000
+  0x00007fbb682748c4:   jge    0x00007fbb682748f1
+  0x00007fbb682748c6:   xchg   ax,ax                        ;*aload {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@21 (line 68)
+  0x00007fbb682748c8:   mov    r11d,DWORD PTR [rbx+0x1c]
+  0x00007fbb682748cc:   cmp    r8d,r11d
+  0x00007fbb682748cf:   jge    0x00007fbb68274939           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::put@6 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb682748d1:   mov    r10,QWORD PTR [rbx+0x10]
+  0x00007fbb682748d5:   movsxd r11,r8d
+  0x00007fbb682748d8:   shl    r11,0x3
+  0x00007fbb682748dc:   add    r11,r10
+  0x00007fbb682748df:   mov    r10,r11
+  0x00007fbb682748e2:   mov    QWORD PTR [r10],rdi          ;*invokevirtual putLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::putLong@4 (line 382)
+                                                            ; - java.nio.DirectLongBufferS::put@16 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+  0x00007fbb682748e5:   inc    r8d                          ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@30 (line 67)
+  0x00007fbb682748e8:   cmp    r8d,0x400000
+  0x00007fbb682748ef:   jl     0x00007fbb682748c8           ;*if_icmpge {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@18 (line 67)
+  0x00007fbb682748f1:   add    rsp,0x40
+  0x00007fbb682748f5:   pop    rbp
+  0x00007fbb682748f6:   mov    r10,QWORD PTR [r15+0x108]
+  0x00007fbb682748fd:   test   DWORD PTR [r10],eax          ;   {poll_return}
+  0x00007fbb68274900:   ret
+  0x00007fbb68274901:   mov    r9d,r8d
+  0x00007fbb68274904:   mov    esi,0x66
+  0x00007fbb68274909:   mov    DWORD PTR [rsp],r9d
+  0x00007fbb6827490d:   mov    QWORD PTR [rsp+0x8],rbx
+  0x00007fbb68274912:   mov    QWORD PTR [rsp+0x10],rbx
+  0x00007fbb68274917:   mov    QWORD PTR [rsp+0x20],rcx
+  0x00007fbb6827491c:   data16 xchg ax,ax
+  0x00007fbb6827491f:   call   0x00007fbb6078ae80           ; ImmutableOopMap {[8]=Oop [16]=Oop }
+                                                            ;*new {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@12 (line 720)
+                                                            ; - java.nio.DirectLongBufferS::put@6 (line 382)
+                                                            ; - me.serce.BufferAccessBenchmark::putLong@26 (line 68)
+                                                            ;   {runtime_call UncommonTrapBlob}
+  0x00007fbb68274924:   mov    esi,0xffffff76
+  0x00007fbb68274929:   mov    QWORD PTR [rsp],rcx
+  0x00007fbb6827492d:   xchg   ax,ax
+  0x00007fbb6827492f:   call   0x00007fbb6078ae80           ; ImmutableOopMap {rbp=NarrowOop }
+                                                            ;*if_icmpge {reexecute=1 rethrow=0 return_oop=0}
+                                                            ; - (reexecute) me.serce.BufferAccessBenchmark::putLong@18 (line 67)
+                                                            ;   {runtime_call UncommonTrapBlob}
+  0x00007fbb68274934:   xor    r9d,r9d
+  0x00007fbb68274937:   jmp    0x00007fbb68274904
+  0x00007fbb68274939:   mov    r9d,r8d
+  0x00007fbb6827493c:   jmp    0x00007fbb68274904
+  0x00007fbb6827493e:   hlt
+  0x00007fbb6827493f:   hlt
+[Exception Handler]
+  0x00007fbb68274940:   jmp    0x00007fbb607eb300           ;   {no_reloc}
+[Deopt Handler Code]
+  0x00007fbb68274945:   call   0x00007fbb6827494a
+  0x00007fbb6827494a:   sub    QWORD PTR [rsp],0x5
+  0x00007fbb6827494f:   jmp    0x00007fbb607cac20           ;   {runtime_call DeoptimizationBlob}
+  0x00007fbb68274954:   hlt
+  0x00007fbb68274955:   hlt
+  0x00007fbb68274956:   hlt
+  0x00007fbb68274957:   hlt
+--------------------------------------------------------------------------------

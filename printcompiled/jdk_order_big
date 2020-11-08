@@ -1,0 +1,263 @@
+============================= C2-compiled nmethod ==============================
+----------------------------------- Assembly -----------------------------------
+
+Compiled method (c2)    7030  514       4       me.serce.OrderBenchmark::sumBytes (29 bytes)
+ total in heap  [0x00007f9d5c276d10,0x00007f9d5c2774d0] = 1984
+ relocation     [0x00007f9d5c276e70,0x00007f9d5c276e98] = 40
+ main code      [0x00007f9d5c276ea0,0x00007f9d5c2770a0] = 512
+ stub code      [0x00007f9d5c2770a0,0x00007f9d5c2770b8] = 24
+ oops           [0x00007f9d5c2770b8,0x00007f9d5c2770c8] = 16
+ metadata       [0x00007f9d5c2770c8,0x00007f9d5c277100] = 56
+ scopes data    [0x00007f9d5c277100,0x00007f9d5c2771e0] = 224
+ scopes pcs     [0x00007f9d5c2771e0,0x00007f9d5c2774a0] = 704
+ dependencies   [0x00007f9d5c2774a0,0x00007f9d5c2774a8] = 8
+ nul chk table  [0x00007f9d5c2774a8,0x00007f9d5c2774d0] = 40
+
+--------------------------------------------------------------------------------
+[Constant Pool (empty)]
+
+--------------------------------------------------------------------------------
+
+[Entry Point]
+  # {method} {0x00007f9d70843f70} 'sumBytes' '()J' in 'me/serce/OrderBenchmark'
+  #           [sp+0x50]  (sp of caller)
+  0x00007f9d5c276ea0:   mov    r10d,DWORD PTR [rsi+0x8]
+  0x00007f9d5c276ea4:   shl    r10,0x3
+  0x00007f9d5c276ea8:   movabs r12,0x800000000
+  0x00007f9d5c276eb2:   add    r10,r12
+  0x00007f9d5c276eb5:   xor    r12,r12
+  0x00007f9d5c276eb8:   cmp    rax,r10
+  0x00007f9d5c276ebb:   jne    0x00007f9d547cd580           ;   {runtime_call ic_miss_stub}
+  0x00007f9d5c276ec1:   data16 xchg ax,ax
+  0x00007f9d5c276ec4:   nop    DWORD PTR [rax+rax*1+0x0]
+  0x00007f9d5c276ecc:   data16 data16 xchg ax,ax
+[Verified Entry Point]
+  0x00007f9d5c276ed0:   mov    DWORD PTR [rsp-0x14000],eax
+  0x00007f9d5c276ed7:   push   rbp
+  0x00007f9d5c276ed8:   sub    rsp,0x40                     ;*synchronization entry
+                                                            ; - me.serce.OrderBenchmark::sumBytes@-1 (line 66)
+  0x00007f9d5c276edc:   mov    rdx,rsi
+  0x00007f9d5c276edf:   mov    r10d,DWORD PTR [rsi+0x14]
+  0x00007f9d5c276ee3:   xor    ecx,ecx
+  0x00007f9d5c276ee5:   mov    r11d,DWORD PTR [r10+0x8]     ; implicit exception: dispatches to 0x00007f9d5c277088
+  0x00007f9d5c276ee9:   mov    r8,r10                       ;*getfield buffer {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@12 (line 68)
+  0x00007f9d5c276eec:   xor    edi,edi
+  0x00007f9d5c276eee:   cmp    r11d,0x16577b                ;   {metadata('java/nio/DirectLongBufferS')}
+  0x00007f9d5c276ef5:   jne    0x00007f9d5c277028           ;*invokevirtual get {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276efb:   mov    ebx,DWORD PTR [r8+0x1c]      ;*getfield limit {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@6 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276eff:   test   ebx,ebx
+  0x00007f9d5c276f01:   jle    0x00007f9d5c27704a           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f07:   mov    r10,QWORD PTR [r8+0x10]
+  0x00007f9d5c276f0b:   mov    rax,QWORD PTR [r10]          ;*invokevirtual getLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::getLong@3 (line 376)
+                                                            ; - java.nio.DirectLongBufferS::get@12 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f0e:   bswap  rax                          ;*invokestatic reverseBytes {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Bits::swap@1 (line 60)
+                                                            ; - java.nio.DirectLongBufferS::get@15 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f11:   mov    r10d,0x7d0
+  0x00007f9d5c276f17:   mov    r11d,0x1
+  0x00007f9d5c276f1d:   mov    r9d,0x7ffffff
+  0x00007f9d5c276f23:   sub    r9d,r11d
+  0x00007f9d5c276f26:   cmp    r9d,r10d
+  0x00007f9d5c276f29:   cmovg  r9d,r10d
+  0x00007f9d5c276f2d:   add    r9d,r11d                     ;*lload_1 {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@10 (line 68)
+  0x00007f9d5c276f30:   mov    r8d,DWORD PTR [rdx+0x14]
+  0x00007f9d5c276f34:   mov    ebx,DWORD PTR [r8+0x8]       ; implicit exception: dispatches to 0x00007f9d5c277085
+                                                            ;*getfield buffer {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@12 (line 68)
+  0x00007f9d5c276f38:   cmp    ebx,0x16577b                 ;   {metadata('java/nio/DirectLongBufferS')}
+  0x00007f9d5c276f3e:   jne    0x00007f9d5c277022           ;*invokevirtual get {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f44:   mov    ebx,DWORD PTR [r8+0x1c]      ;*getfield limit {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@6 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f48:   cmp    r11d,ebx
+  0x00007f9d5c276f4b:   jge    0x00007f9d5c277044           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f51:   mov    r8,QWORD PTR [r8+0x10]       ;*invokevirtual getLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::getLong@3 (line 376)
+                                                            ; - java.nio.DirectLongBufferS::get@12 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f55:   movsxd rsi,r11d
+  0x00007f9d5c276f58:   mov    ecx,r11d
+  0x00007f9d5c276f5b:   inc    ecx                          ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@21 (line 67)
+  0x00007f9d5c276f5d:   shl    rsi,0x3                      ;*lshl {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.DirectLongBufferS::ix@7 (line 260)
+                                                            ; - java.nio.DirectLongBufferS::get@9 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f61:   add    r8,rsi
+  0x00007f9d5c276f64:   mov    rdi,QWORD PTR [r8]           ;*invokevirtual getLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::getLong@3 (line 376)
+                                                            ; - java.nio.DirectLongBufferS::get@12 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f67:   mov    r8d,DWORD PTR [rdx+0x14]     ;*getfield buffer {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@12 (line 68)
+  0x00007f9d5c276f6b:   mov    ebx,DWORD PTR [r8+0x8]       ; implicit exception: dispatches to 0x00007f9d5c277088
+  0x00007f9d5c276f6f:   bswap  rdi                          ;*invokestatic reverseBytes {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Bits::swap@1 (line 60)
+                                                            ; - java.nio.DirectLongBufferS::get@15 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f72:   add    rdi,rax                      ;*getfield buffer {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@12 (line 68)
+  0x00007f9d5c276f75:   cmp    ebx,0x16577b                 ;   {metadata('java/nio/DirectLongBufferS')}
+  0x00007f9d5c276f7b:   jne    0x00007f9d5c277028           ;*invokevirtual get {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f81:   mov    ebx,DWORD PTR [r8+0x1c]      ;*getfield limit {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@6 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f85:   cmp    ecx,ebx
+  0x00007f9d5c276f87:   jge    0x00007f9d5c27704a           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f8d:   mov    r8,QWORD PTR [r8+0x10]
+  0x00007f9d5c276f91:   mov    rax,QWORD PTR [r8+rsi*1+0x8] ;*invokevirtual getLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::getLong@3 (line 376)
+                                                            ; - java.nio.DirectLongBufferS::get@12 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f96:   bswap  rax                          ;*invokestatic reverseBytes {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Bits::swap@1 (line 60)
+                                                            ; - java.nio.DirectLongBufferS::get@15 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276f99:   add    rax,rdi                      ;*ladd {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@19 (line 68)
+  0x00007f9d5c276f9c:   add    r11d,0x2                     ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@21 (line 67)
+  0x00007f9d5c276fa0:   cmp    r11d,r9d
+  0x00007f9d5c276fa3:   jl     0x00007f9d5c276f30           ;*goto {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@24 (line 67)
+  0x00007f9d5c276fa5:   mov    r9,QWORD PTR [r15+0x108]     ; ImmutableOopMap {rdx=Oop }
+                                                            ;*goto {reexecute=1 rethrow=0 return_oop=0}
+                                                            ; - (reexecute) me.serce.OrderBenchmark::sumBytes@24 (line 67)
+  0x00007f9d5c276fac:   test   DWORD PTR [r9],eax           ;*goto {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@24 (line 67)
+                                                            ;   {poll}
+  0x00007f9d5c276faf:   cmp    r11d,0x7ffffff
+  0x00007f9d5c276fb6:   jl     0x00007f9d5c276f1d
+  0x00007f9d5c276fbc:   cmp    r11d,0x8000000
+  0x00007f9d5c276fc3:   jge    0x00007f9d5c277012
+  0x00007f9d5c276fc5:   data16 xchg ax,ax                   ;*lload_1 {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@10 (line 68)
+  0x00007f9d5c276fc8:   mov    r10d,DWORD PTR [rdx+0x14]
+  0x00007f9d5c276fcc:   mov    ecx,DWORD PTR [r10+0x8]      ; implicit exception: dispatches to 0x00007f9d5c277080
+  0x00007f9d5c276fd0:   mov    r8,r10                       ;*getfield buffer {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@12 (line 68)
+  0x00007f9d5c276fd3:   cmp    ecx,0x16577b                 ;   {metadata('java/nio/DirectLongBufferS')}
+  0x00007f9d5c276fd9:   jne    0x00007f9d5c277070           ;*invokevirtual get {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276fdf:   mov    ebx,DWORD PTR [r8+0x1c]      ;*getfield limit {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@6 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276fe3:   cmp    r11d,ebx
+  0x00007f9d5c276fe6:   jge    0x00007f9d5c277078           ;*if_icmplt {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c276fec:   mov    r10,QWORD PTR [r8+0x10]
+  0x00007f9d5c276ff0:   movsxd r8,r11d
+  0x00007f9d5c276ff3:   shl    r8,0x3
+  0x00007f9d5c276ff7:   add    r8,r10
+  0x00007f9d5c276ffa:   mov    r10,r8
+  0x00007f9d5c276ffd:   mov    r10,QWORD PTR [r10]          ;*invokevirtual getLong {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - jdk.internal.misc.Unsafe::getLong@3 (line 376)
+                                                            ; - java.nio.DirectLongBufferS::get@12 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c277000:   bswap  r10                          ;*invokestatic reverseBytes {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - java.nio.Bits::swap@1 (line 60)
+                                                            ; - java.nio.DirectLongBufferS::get@15 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+  0x00007f9d5c277003:   add    rax,r10                      ;*ladd {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@19 (line 68)
+  0x00007f9d5c277006:   inc    r11d                         ;*iinc {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@21 (line 67)
+  0x00007f9d5c277009:   cmp    r11d,0x8000000
+  0x00007f9d5c277010:   jl     0x00007f9d5c276fc8           ;*if_icmpge {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@7 (line 67)
+  0x00007f9d5c277012:   add    rsp,0x40
+  0x00007f9d5c277016:   pop    rbp
+  0x00007f9d5c277017:   mov    r10,QWORD PTR [r15+0x108]
+  0x00007f9d5c27701e:   test   DWORD PTR [r10],eax          ;   {poll_return}
+  0x00007f9d5c277021:   ret
+  0x00007f9d5c277022:   mov    rdi,rax
+  0x00007f9d5c277025:   mov    ecx,r11d
+  0x00007f9d5c277028:   mov    esi,0xffffffde
+  0x00007f9d5c27702d:   mov    rbp,rdx
+  0x00007f9d5c277030:   mov    QWORD PTR [rsp+0x8],rdi
+  0x00007f9d5c277035:   mov    QWORD PTR [rsp+0x10],r8
+  0x00007f9d5c27703a:   mov    DWORD PTR [rsp+0x4],ecx
+  0x00007f9d5c27703e:   nop
+  0x00007f9d5c27703f:   call   0x00007f9d5478ae80           ; ImmutableOopMap {rbp=Oop [16]=Oop }
+                                                            ;*invokevirtual get {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+                                                            ;   {runtime_call UncommonTrapBlob}
+  0x00007f9d5c277044:   mov    rdi,rax
+  0x00007f9d5c277047:   mov    ecx,r11d
+  0x00007f9d5c27704a:   mov    esi,0xffffff45
+  0x00007f9d5c27704f:   mov    rbp,rdx
+  0x00007f9d5c277052:   mov    QWORD PTR [rsp+0x8],rdi
+  0x00007f9d5c277057:   mov    QWORD PTR [rsp+0x18],r8
+  0x00007f9d5c27705c:   mov    DWORD PTR [rsp+0x4],ecx
+  0x00007f9d5c277060:   mov    DWORD PTR [rsp+0x20],ecx
+  0x00007f9d5c277064:   mov    DWORD PTR [rsp+0x24],ebx
+  0x00007f9d5c277068:   data16 xchg ax,ax
+  0x00007f9d5c27706b:   call   0x00007f9d5478ae80           ; ImmutableOopMap {rbp=Oop [24]=Oop }
+                                                            ;*if_icmplt {reexecute=1 rethrow=0 return_oop=0}
+                                                            ; - (reexecute) java.nio.Buffer::checkIndex@9 (line 719)
+                                                            ; - java.nio.DirectLongBufferS::get@6 (line 273)
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+                                                            ;   {runtime_call UncommonTrapBlob}
+  0x00007f9d5c277070:   mov    rdi,rax
+  0x00007f9d5c277073:   mov    ecx,r11d
+  0x00007f9d5c277076:   jmp    0x00007f9d5c277028
+  0x00007f9d5c277078:   mov    rdi,rax
+  0x00007f9d5c27707b:   mov    ecx,r11d
+  0x00007f9d5c27707e:   jmp    0x00007f9d5c27704a
+  0x00007f9d5c277080:   mov    ecx,r11d
+  0x00007f9d5c277083:   jmp    0x00007f9d5c277088
+  0x00007f9d5c277085:   mov    ecx,r11d
+  0x00007f9d5c277088:   mov    esi,0xfffffff6
+  0x00007f9d5c27708d:   mov    ebp,ecx
+  0x00007f9d5c27708f:   call   0x00007f9d5478ae80           ; ImmutableOopMap {}
+                                                            ;*invokevirtual get {reexecute=0 rethrow=0 return_oop=0}
+                                                            ; - me.serce.OrderBenchmark::sumBytes@16 (line 68)
+                                                            ;   {runtime_call UncommonTrapBlob}
+  0x00007f9d5c277094:   hlt
+  0x00007f9d5c277095:   hlt
+  0x00007f9d5c277096:   hlt
+  0x00007f9d5c277097:   hlt
+  0x00007f9d5c277098:   hlt
+  0x00007f9d5c277099:   hlt
+  0x00007f9d5c27709a:   hlt
+  0x00007f9d5c27709b:   hlt
+  0x00007f9d5c27709c:   hlt
+  0x00007f9d5c27709d:   hlt
+  0x00007f9d5c27709e:   hlt
+  0x00007f9d5c27709f:   hlt
+[Exception Handler]
+  0x00007f9d5c2770a0:   jmp    0x00007f9d547eb300           ;   {no_reloc}
+[Deopt Handler Code]
+  0x00007f9d5c2770a5:   call   0x00007f9d5c2770aa
+  0x00007f9d5c2770aa:   sub    QWORD PTR [rsp],0x5
+  0x00007f9d5c2770af:   jmp    0x00007f9d547cac20           ;   {runtime_call DeoptimizationBlob}
+  0x00007f9d5c2770b4:   hlt
+  0x00007f9d5c2770b5:   hlt
+  0x00007f9d5c2770b6:   hlt
+  0x00007f9d5c2770b7:   hlt
+--------------------------------------------------------------------------------
