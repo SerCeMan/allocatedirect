@@ -6,8 +6,8 @@ source "${REPO_DIR}/_common.sh"
 
 main() {
   pushd "${REPO_DIR}" >/dev/null
-  ./gradlew build shadowJar --no-daemon
   usejdk 13
+  ./gradlew build shadowJar --no-daemon
 
   local gc_opts
   local gc=g1
