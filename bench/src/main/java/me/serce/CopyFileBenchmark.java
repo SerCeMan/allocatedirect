@@ -23,7 +23,7 @@ import static java.nio.file.StandardOpenOption.WRITE;
 @Measurement(iterations = 5, timeUnit = TimeUnit.MILLISECONDS)
 public class CopyFileBenchmark {
 
-  public static final int SIZE = 32 * 1024 * 1024;
+  public static final int SIZE = 64 * 1024 * 1024;
   public static final String DIR = "/tmp/";
 
   @Param({"direct", "heap"})
@@ -75,19 +75,17 @@ public class CopyFileBenchmark {
 
   @Benchmark
   public void reverseBytesInFiles() throws Exception {
-    ByteBuffer localBuf = this.buffer;
-    localBuf.clear();
+    ByteBuffer buf = this.buffer;
+    buf.clear();
     try (FileChannel channel1 = FileChannel.open(Paths.get(DIR + "file1"), READ);
          FileChannel channel2 = FileChannel.open(Paths.get(DIR + "file2"), WRITE)) {
-      while (localBuf.hasRemaining()) {
-        channel1.read(localBuf);
+      while (buf.hasRemaining()) {
+        channel1.read(buf);
       }
-      for (int i = 0; i < SIZE; i += 8) {
-        localBuf.putLong(i, Long.reverse(localBuf.getLong(i)));
-      }
-      localBuf.flip();
-      while (localBuf.hasRemaining()) {
-        channel2.write(localBuf);
+      buf.put(0, buf.get(SIZE - 1));
+      buf.flip();
+      while (buf.hasRemaining()) {
+        channel2.write(buf);
       }
     }
   }
